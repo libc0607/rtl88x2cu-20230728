@@ -457,7 +457,11 @@ struct registry_priv {
 	u8 adaptivity_mode;
 	s8 adaptivity_th_l2h_ini;
 	s8 adaptivity_th_edcca_hl_diff;
-
+	
+	// EDCCA threshold override
+	u8 edcca_thresh_override_en; 
+	s8 edcca_thresh_l2h_override; 
+	
 	u8 boffefusemask;
 	BOOLEAN bFileMaskEfuse;
 	BOOLEAN bBTFileMaskEfuse;
