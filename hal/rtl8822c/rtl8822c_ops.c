@@ -507,6 +507,8 @@ static void Hal_EfuseParseThermalMeter(PADAPTER adapter, u8 *map, u8 mapvalid)
 		u8 eeprom_thermal_meter_a = map[EEPROM_THERMAL_METER_A_8822C];
 		u8 eeprom_thermal_meter_b = map[EEPROM_THERMAL_METER_B_8822C];		
 		hal->eeprom_thermal_meter = (eeprom_thermal_meter_a + eeprom_thermal_meter_b)/2;
+		hal->eeprom_thermal_meter_multi[0] = eeprom_thermal_meter_a; 
+		hal->eeprom_thermal_meter_multi[1] = eeprom_thermal_meter_b; 
 	} else {
 		hal->eeprom_thermal_meter = EEPROM_Default_ThermalMeter;
 		hal->odmpriv.rf_calibrate_info.is_apk_thermal_meter_ignore = _TRUE;

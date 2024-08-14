@@ -5436,13 +5436,95 @@ static ssize_t proc_set_edcca_threshold_jaguar3_override(struct file *file, cons
 	return count;
 }
 
+static int proc_get_thermal_state(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+        struct dm_struct *p_dm_odm = adapter_to_phydm(padapter);
+        HAL_DATA_TYPE *pHalData = GET_HAL_DATA(padapter);
+
+        u8 rx_cnt = rf_type_to_rf_rx_cnt(pHalData->rf_type);
+        int thermal_value = 0;
+        int thermal_offset = 0;
+        int temperature_offset = 32;	// To-Do: measure the value for 8822C. see comment in 8812eu commit 5b7a66d for details
+        int temperature = 0; 
+        int rf_path = 0;
+        u32 thermal_reg_mask = 0;
+
+        if (IS_8822C_SERIES(GET_HAL_DATA(padapter)->version_id)
+                || IS_8723F_SERIES(GET_HAL_DATA(padapter)->version_id)
+                || IS_8822E_SERIES(GET_HAL_DATA(padapter)->version_id))
+                        thermal_reg_mask = 0x007e;      /*0x42: RF Reg[6:1], 35332(themal K  & bias k & power trim) & 35325(tssi )*/
+        else
+                        thermal_reg_mask = 0xfc00;      /*0x42: RF Reg[15:10]*/
+                        
+        temperature_offset = (pHalData->eeprom_thermal_offset_temperature==0)? 
+				temperature_offset: pHalData->eeprom_thermal_offset_temperature;
+
+        for(rf_path = 0; rf_path < rx_cnt; rf_path++)
+        {
+            // need to manually trigger the ADC conversion for latest data
+            phy_set_rf_reg(padapter, rf_path, 0x42, BIT19, 0x1);
+            phy_set_rf_reg(padapter, rf_path, 0x42, BIT19, 0x0);
+            phy_set_rf_reg(padapter, rf_path, 0x42, BIT19, 0x1);
+
+            rtw_usleep_os(15);    // 15us in halrf_get_thermal_8822e()
+            
+            thermal_value = phy_query_rf_reg(padapter, rf_path, 0x42, thermal_reg_mask);
+            thermal_offset = pHalData->eeprom_thermal_meter_multi[rf_path];
+            temperature = (((thermal_value-thermal_offset) *5)/2) + temperature_offset;
+            RTW_PRINT_SEL(m, "rf_path: %d, thermal_value: %d, offset: %d, temperature: %d\n", rf_path, thermal_value, thermal_offset, temperature);
+        }
+
+        return 0;
+}
+
+static ssize_t proc_set_thermal_state(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct registry_priv *pregpriv = &padapter->registrypriv;
+	HAL_DATA_TYPE *pHalData = GET_HAL_DATA(padapter);
+	char tmp[32];
+	u32 offset_temp;
+
+	if (!padapter)
+		return -EFAULT;
+
+	if (count < 1) {
+		RTW_INFO("Set thermal_state Argument error. \n");
+		return -EFAULT;
+	}
+
+	if (count > sizeof(tmp)) {
+		rtw_warn_on(1);
+		return -EFAULT;
+	}
+
+	if (buffer && !copy_from_user(tmp, buffer, count)) {
+		int num = sscanf(tmp, "%u", &offset_temp);
+		if (num < 1)
+			return count;
+	}
+
+	if (offset_temp > 70) {
+		RTW_INFO("Set thermal_state Argument range error. \n");
+		return -EFAULT;
+	}
+
+	RTW_INFO("Write to thermal_state offset tempC : %d\n", offset_temp);
+	pHalData->eeprom_thermal_offset_temperature = (u8)offset_temp;
+
+	return count;
+}
 
 /*
 * rtw_adapter_proc:
 * init/deinit when register/unregister net_device
 */
 const struct rtw_proc_hdl adapter_proc_hdls[] = {
-RTW_PROC_HDL_SSEQ("edcca_threshold_jaguar3_override", proc_get_edcca_threshold_jaguar3_override, proc_set_edcca_threshold_jaguar3_override),
+	RTW_PROC_HDL_SSEQ("edcca_threshold_jaguar3_override", proc_get_edcca_threshold_jaguar3_override, proc_set_edcca_threshold_jaguar3_override),
+	RTW_PROC_HDL_SSEQ("thermal_state", proc_get_thermal_state, proc_set_thermal_state),
 #if RTW_SEQ_FILE_TEST
 	RTW_PROC_HDL_SEQ("seq_file_test", &seq_file_test, NULL),
 #endif

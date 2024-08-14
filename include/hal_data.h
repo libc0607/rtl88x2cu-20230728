@@ -430,6 +430,8 @@ typedef struct hal_com_data {
 	u8	EEPROMVersion;
 	u8	EEPROMRegulatory;
 	u8	eeprom_thermal_meter;
+	u8 	eeprom_thermal_meter_multi[MAX_RF_PATH];
+	u8 	eeprom_thermal_offset_temperature;
 	u8	EEPROMBluetoothCoexist;
 	u8	EEPROMBluetoothType;
 	u8	EEPROMBluetoothAntNum;
