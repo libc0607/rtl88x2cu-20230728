@@ -149,7 +149,14 @@ static void rtw_regd_schedule_dfs_chan_update(struct wiphy *wiphy)
 		rtw_regd_set_du_chdef(wiphy);
 	}
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0))
+	cfg80211_ch_switch_notify(wiphy_data->du_wdev->netdev, &wiphy_data->du_chdef, 0, 0);
+#elif (defined(CONFIG_MLD_KERNEL_PATCH) || (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 2)))
+	cfg80211_ch_switch_notify(wiphy_data->du_wdev->netdev, &wiphy_data->du_chdef, 0);
+#else
 	cfg80211_ch_switch_notify(wiphy_data->du_wdev->netdev, &wiphy_data->du_chdef);
+#endif
+
 }
 
 static void rtw_regd_override_dfs_state(struct wiphy *wiphy, struct get_chplan_resp *chplan, bool non_ocp_only)
@@ -1047,7 +1054,11 @@ static void rtw_cfg80211_cac_event(struct rf_ctl_t *rfctl, u8 band_idx
 			continue;
 		if (!iface->rtw_wdev)
 			continue;
+		#if defined(CONFIG_MLD_KERNEL_PATCH) || (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 2))
+		async = !((iface->rtw_wdev)->links[0].ap.chandef.chan);
+#else
 		async = !iface->rtw_wdev->chandef.chan;
+#endif
 		RTW_INFO(FUNC_ADPT_FMT" async:%d\n", caller, ADPT_ARG(iface), async);
 		if (async)
 			cfg80211_cac_event_async(iface->pnetdev, &chdef, event);
@@ -1274,7 +1285,15 @@ int rtw_regd_init(struct wiphy *wiphy)
 	wiphy->regulatory_flags &= ~REGULATORY_DISABLE_BEACON_HINTS;
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0))
+/*
+ * Ubuntu backported a specific upstream change to kernel 6.2 while others skipped 6.2 altogether.
+ * If build fails on kernel 6.2.x and you're not using Ubuntu,
+ * try changing the version "(6, 3, 0)" below to "(6, 2, 0)".
+ */
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) && (LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 39)) \
+	|| (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)) && (LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 13)) \
+	|| (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)) && (LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 4))
 	wiphy->regulatory_flags |= REGULATORY_IGNORE_STALE_KICKOFF;
 #endif
 
