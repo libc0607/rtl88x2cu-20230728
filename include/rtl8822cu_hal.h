@@ -47,7 +47,7 @@
 				#define MAX_RECVBUF_SZ (20480) /* 20k */
 			#endif
 		#else
-			#define MAX_RECVBUF_SZ (4000)
+			#define MAX_RECVBUF_SZ (4096)
 		#endif
 	#endif /* !MAX_RECVBUF_SZ */
 
