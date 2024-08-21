@@ -1,4 +1,4 @@
-config RTL8822BU
+config RTL8822CU
 	tristate "Realtek 8822C USB WiFi"
 	depends on USB
 	---help---
