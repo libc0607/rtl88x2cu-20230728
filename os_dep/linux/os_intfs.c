@@ -904,7 +904,7 @@ MODULE_PARM_DESC(rtw_antenna_gain, "Antenna gain in mBi. 0x7FFF: unspecifed");
 
 #ifdef CONFIG_RTW_TX_NPATH_EN
 /*0:disable ,1: 2path*/
-int rtw_tx_npath_enable = 1;
+int rtw_tx_npath_enable = 0;
 module_param(rtw_tx_npath_enable, int, 0644);
 MODULE_PARM_DESC(rtw_tx_npath_enable, "0:Disable, 1:TX-2PATH");
 #endif

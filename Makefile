@@ -18,6 +18,9 @@ EXTRA_CFLAGS += -Wno-unused-variable
 # Let the OS decide the regd instead of phy "self-managed"
 EXTRA_CFLAGS += -DCONFIG_REGD_SRC_FROM_OS
 
+# TX NPATH config
+EXTRA_CFLAGS += -DCONFIG_RTW_TX_NPATH_EN
+
 ############ ANDROID COMMON KERNEL ############
 # clang
 ifeq ($(CC), clang)
