@@ -5601,6 +5601,76 @@ static ssize_t proc_set_dis_cca(struct file *file, const char __user *buffer, si
 	return count;
 }
 
+static int proc_get_single_tone(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct registry_priv	*pregpriv = &padapter->registrypriv;
+	struct dm_struct *dm;
+	u32 bit_dis_cca;
+
+	if (!padapter)
+		return -EFAULT;
+
+	dm = adapter_to_phydm(padapter);
+
+
+	RTW_PRINT_SEL(m, "single_tone: <en:0(dis)/1(en)> <rf_path:0(A)/1(B)/4(AB)>\n");
+
+	return 0;
+}
+
+static ssize_t proc_set_single_tone(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct registry_priv	*pregpriv = &padapter->registrypriv;
+	struct dm_struct *dm;
+	dm = adapter_to_phydm(padapter);
+
+	char tmp[32];
+	u32 en, rf_path;
+
+	if (!padapter)
+		return -EFAULT;
+
+	if (count < 2) {
+		RTW_INFO("Set single_tone Argument error.\n");
+		return -EFAULT;
+	}
+
+	if (count > sizeof(tmp)) {
+		rtw_warn_on(1);
+		return -EFAULT;
+	}
+
+	if (buffer && !copy_from_user(tmp, buffer, count)) {
+		int num = sscanf(tmp, "%u %u", &en, &rf_path);
+		if (num < 1)
+			return count;
+	}
+
+	if (rf_path != RF_PATH_A && rf_path != RF_PATH_B && rf_path != RF_PATH_AB) {
+		RTW_INFO("Set single_tone rf_path Argument range error.\n");
+		return -EFAULT;
+	}
+
+	if (en != 0 && en != 1) {
+		RTW_INFO("Set single_tone en Argument range error.\n");
+		return -EFAULT;
+	}
+
+	if (en == 1) {
+		phydm_mp_set_single_tone(dm, true, rf_path);
+	} else {
+		phydm_mp_set_single_tone(dm, false, rf_path);
+	}
+
+	RTW_INFO("Write to single_tone: en %d, path %d\n", en, rf_path);
+
+	return count;
+}
+
 /*
 * rtw_adapter_proc:
 * init/deinit when register/unregister net_device
@@ -5609,6 +5679,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("edcca_threshold_jaguar3_override", proc_get_edcca_threshold_jaguar3_override, proc_set_edcca_threshold_jaguar3_override),
 	RTW_PROC_HDL_SSEQ("thermal_state", proc_get_thermal_state, proc_set_thermal_state),
 	RTW_PROC_HDL_SSEQ("dis_cca", proc_get_dis_cca, proc_set_dis_cca),
+	RTW_PROC_HDL_SSEQ("single_tone", proc_get_single_tone, proc_set_single_tone),
 #if RTW_SEQ_FILE_TEST
 	RTW_PROC_HDL_SEQ("seq_file_test", &seq_file_test, NULL),
 #endif
