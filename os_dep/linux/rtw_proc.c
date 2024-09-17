@@ -5547,7 +5547,7 @@ static ssize_t proc_set_dis_cca(struct file *file, const char __user *buffer, si
 	char tmp[32];
 	u32 en;
 	
-	dm = adapter_to_phydm(adapter);
+	dm = adapter_to_phydm(padapter);
 	
 	if (!padapter)
 		return -EFAULT;
