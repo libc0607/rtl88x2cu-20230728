@@ -5418,7 +5418,7 @@ static ssize_t proc_set_edcca_threshold_jaguar3_override(struct file *file, cons
 	}
 
 	if (buffer && !copy_from_user(tmp, buffer, count)) {
-		int num = sscanf(tmp, "%u %d", &edcca_thresh_en, &edcca_thresh);
+		int num = sscanf(tmp, "%hhu %d", &edcca_thresh_en, &edcca_thresh);
 		if (num < 1)
 			return count;
 	}
