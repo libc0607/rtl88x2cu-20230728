@@ -15725,10 +15725,13 @@ u8 rtw_set_chbw_hdl(_adapter *padapter, u8 *pbuf)
 {
 	struct set_ch_parm *set_ch_parm;
 	struct mlme_ext_priv	*pmlmeext = &padapter->mlmeextpriv;
+	struct mlme_priv *mlme;
 	u8 ifbmp_s = rtw_mi_get_ld_sta_ifbmp(padapter);
 	struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
 	u8 u_ch, u_bw, u_offset;
 
+        mlme = &padapter->mlmepriv;
+        
 	if (!pbuf)
 		return H2C_PARAMETERS_ERROR;
 
@@ -15756,6 +15759,12 @@ u8 rtw_set_chbw_hdl(_adapter *padapter, u8 *pbuf)
 			iface->mlmepriv.cur_network.network.Configuration.DSConfig = set_ch_parm->ch;
 		}
 	}
+	// should also update in monitor mode
+	if (check_fwstate(mlme, WIFI_MONITOR_STATE)) {
+            pmlmeext->cur_channel = set_ch_parm->ch;
+            pmlmeext->cur_bwmode = set_ch_parm->bw;
+            pmlmeext->cur_ch_offset = set_ch_parm->ch_offset;
+        }
 	
 	LeaveAllPowerSaveModeDirect(padapter);
 	
