@@ -16,19 +16,26 @@ Tested:
  - TX power unlocked (same as the 8812eu driver, ```iw wlan0 set txpower fixed <0~3150>```)  
  - RX in monitor mode  
  - TX injection in monitor mode, HT/VHT rates, and STBC/LDPC all work well  
- - Narrowband support in monitor mode, 5MHz/10MHz bandwidth  
+ - Narrowband support in monitor mode, 5MHz/10MHz bandwidth
+ - DKMS build script  
 
 Need test:  
  - EDCCA patch  
  - \~4K Maximum MTU  
- - DKMS build script  
  - ACK timeout (in procfs)  
  - 10MHz BW in AP/STA mode (seems that the firmware needs to be replaced: [hal8822c_fw_10M.c](https://github.com/libc0607/rtl88x2cu-20230728/blob/main/hal/rtl8822c/hal8822c_fw_10M.c))  
  - Thermal sensor default offset (the sensor readout code is working, but it needs a single-point calibration, so a default value needs to be set depending on some actual measurement)  
  - Single tone output (/proc, single_tone)  
- - Disable CCA (/proc, dis_cca)  
+ - Disable CCA (/proc, dis_cca)
+ - Monitor mode transmit beamforming (compatible with 88x2cu/88x2eu, needs support on both TX/RX side, see [here](https://github.com/libc0607/rtl88x2eu-20230815/tree/beamforming_research) for usage)
 
 Known bugs/issues:  
  - Short GI not working (not the radiotap header issue -- even when TXDESC is set by SET_TX_DESC_DATA_SHORT_8822C()). Maybe it's a firmware bug. But you should always use long GI on your drone so it doesn't matter  
  - ~~Set txpower by ```iw``` higher than a certain (depends on the module, but significantly higher than the factory) value will cause tx to hang, and cannot be recovered unless manually reset the adaptor. Not sure if it's a power issue caused by poor PCB trace width inside the module (it's reasonable to not use an inner power plane for a \~300mA total chip...), some firmware bug, or even some analog silicon bug (latch-up?). Not caused by high temperature (water cooling tested, still), or any high TX traffic. Weird...~~
- - LB-LINK said the issue above can be a power failure, and a proper 3.3V power supply is needed. I was using 3.3V/1A, so I recommend at least 3.3V/2A  
+ - LB-LINK said the issue above can be a power failure, and a proper 3.3V power supply is needed. I was using 3.3V/1A, so I recommend at least 3.3V/2A
+
+To-do:
+ - Custom hardware module design using RTL88x2CU chip
+ - ...
+
+
