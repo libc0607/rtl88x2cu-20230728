@@ -479,7 +479,7 @@ struct pkt_attrib {
 	u8 icmp_pkt;
 	u8 hipriority_pkt; /* high priority packet */
 
-#ifdef CONFIG_BEAMFORMING
+#if defined(CONFIG_BEAMFORMING) || defined(CONFIG_BEAMFORMING_MONITOR)
 	u16 txbf_p_aid;/*beamforming Partial_AID*/
 	u16 txbf_g_id;/*beamforming Group ID*/
 

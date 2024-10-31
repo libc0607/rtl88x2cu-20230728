@@ -5670,6 +5670,155 @@ static ssize_t proc_set_single_tone(struct file *file, const char __user *buffer
 
 	return count;
 }
+static int proc_get_bf_monitor_conf(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	
+	if (!padapter)
+		return -EFAULT;
+        bf_monitor_print_conf(padapter, m);
+	return 0;
+}
+static ssize_t proc_set_bf_monitor_conf(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct registry_priv	*pregpriv = &padapter->registrypriv;
+	struct dm_struct *dm;
+	char tmp[64];
+	int num;
+	int action; // 0-reset, 1-init
+	u8 bfer_macaddr[6]; 
+        u16 bfee_p_aid;     // Partial AID, 12-bit
+        u8 bfer_g_id;       // Group ID, 0 or 63
+	
+	dm = adapter_to_phydm(padapter);
+	if (!padapter)
+		return -EFAULT;
+	if (count > sizeof(tmp)) 
+		goto show_usage;
+	if (buffer && !copy_from_user(tmp, buffer, count)) {
+		num = sscanf(tmp, "%d", &action);
+		if (num < 1)
+			goto show_usage;
+	}
+	
+        if (action == 0) {
+            bf_monitor_reset(padapter);
+            RTW_INFO("%s: Write to bf_monitor_conf: bf_monitor_reset\n", __FUNCTION__);
+        } else if (action == 1) {
+            num = sscanf(tmp, "%d %2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx %hhu %hu", &action, 
+                &bfer_macaddr[0], &bfer_macaddr[1], &bfer_macaddr[2], &bfer_macaddr[3], &bfer_macaddr[4], &bfer_macaddr[5],
+                &bfer_g_id, &bfee_p_aid);
+            RTW_INFO("%s: Write to bf_monitor_conf: bf_monitor_init, \n", __FUNCTION__);
+	    bf_monitor_init(padapter, bfer_macaddr, bfer_g_id, bfee_p_aid);
+        } else {
+            RTW_INFO("%s: Write to bf_monitor_conf: arg error \n", __FUNCTION__);
+            goto show_usage;
+        }
+	return count;
+show_usage:
+	// Print usage to dmesg
+	RTW_INFO("bf_monitor_conf Usage: \n");
+	RTW_INFO("\t< action (0:rst/1:set) > < remote bfer mac > < remote bfer g_id > < remote bfee p_aid >\n");
+	RTW_INFO("example: \n");
+	RTW_INFO("\techo \"1 00:11:22:33:44:55 0 0\" > bf_monitor_conf \n");
+	return -EFAULT;
+}
+static int proc_get_bf_monitor_trig(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	
+	if (!padapter)
+		return -EFAULT;
+        bf_monitor_print_cbr(padapter, m);
+        
+	return 0;
+}
+static ssize_t proc_set_bf_monitor_trig(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct registry_priv	*pregpriv = &padapter->registrypriv;
+	struct dm_struct *dm;
+	char tmp[128];
+	
+	u8 bfer_macaddr[6]; 
+        u8 bfee_macaddr[6]; 
+        u16 p_aid;          // Partial AID, 12-bit
+        u8 g_id;            // Group ID, 0 or 63
+        u8 seq;             // 0~63, 6-bit
+        enum channel_width bw;
+        u8 bw_int;
+	
+	dm = adapter_to_phydm(padapter);
+	if (!padapter)
+		return -EFAULT;
+	if (count > sizeof(tmp)) 
+		goto show_usage;
+	if (buffer && !copy_from_user(tmp, buffer, count)) {
+		int num = sscanf(tmp, "%2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx %2hhx:%2hhx:%2hhx:%2hhx:%2hhx:%2hhx %hu %hhu %hhu %hhu", 
+		    &bfer_macaddr[0], &bfer_macaddr[1], &bfer_macaddr[2], &bfer_macaddr[3], &bfer_macaddr[4], &bfer_macaddr[5],
+		    &bfee_macaddr[0], &bfee_macaddr[1], &bfee_macaddr[2], &bfee_macaddr[3], &bfee_macaddr[4], &bfee_macaddr[5],
+                    &p_aid, &g_id, &seq, &bw_int);
+		if (num < 1)
+			goto show_usage;
+	}
+	
+	if (bw_int == 5 || bw_int == 10 || bw_int == 20) 
+	    bw = CHANNEL_WIDTH_20;
+	else if (bw_int == 40) 
+	    bw = CHANNEL_WIDTH_40; 
+	else if (bw_int == 80) 
+	    bw = CHANNEL_WIDTH_80;
+	else {
+	    RTW_INFO("Write to bf_monitor_trig: invalid BW\n");
+	    goto show_usage;
+	}
+	
+	seq &= 0x3f;
+	p_aid &= 0x0fff;
+	g_id = (g_id==0)? 0: 63;
+	
+	bf_monitor_send(padapter, bfer_macaddr, bfee_macaddr, p_aid, g_id, seq, bw);
+	
+	return count;
+	
+show_usage:
+        // Print usage to dmesg
+	RTW_INFO("bf_monitor_trig, send VHT NDPA + NDP packet \n");
+	RTW_INFO("Usage: \n");
+	RTW_INFO("\t<rx_addr> <tx_addr> <p_aid(12bit)> <g_id(0/63)> <sounding_token(0~63)> <bw(10/20/40/80)>\n");
+	RTW_INFO("example: \n");
+	RTW_INFO("\techo \"00:11:22:33:44:55 66:77:88:99:aa:bb 0 0 0 20\" > bf_monitor_trig \n");
+	
+        return -EFAULT;
+}
+static ssize_t proc_set_bf_monitor_en(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct registry_priv	*pregpriv = &padapter->registrypriv;
+	char tmp[128];
+	
+        u8 en;
+	
+	if (!padapter)
+		return -EFAULT;
+	if (count > sizeof(tmp)) 
+		return -EFAULT;
+	if (buffer && !copy_from_user(tmp, buffer, count)) {
+		int num = sscanf(tmp, "%hhu", &en);
+		if (num < 1)
+			return -EFAULT;
+	}
+	
+	bf_monitor_enable_txbf(padapter, en>0? _TRUE: _FALSE);
+        RTW_INFO("bf_monitor_enable, %hhu \n", en);
+	return count;
+}
 
 /*
 * rtw_adapter_proc:
@@ -5680,6 +5829,11 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("thermal_state", proc_get_thermal_state, proc_set_thermal_state),
 	RTW_PROC_HDL_SSEQ("dis_cca", proc_get_dis_cca, proc_set_dis_cca),
 	RTW_PROC_HDL_SSEQ("single_tone", proc_get_single_tone, proc_set_single_tone),
+#ifdef CONFIG_BEAMFORMING_MONITOR
+        RTW_PROC_HDL_SSEQ("bf_monitor_conf", proc_get_bf_monitor_conf, proc_set_bf_monitor_conf),
+        RTW_PROC_HDL_SSEQ("bf_monitor_trig", proc_get_bf_monitor_trig, proc_set_bf_monitor_trig),
+        RTW_PROC_HDL_SSEQ("bf_monitor_en",   NULL,                     proc_set_bf_monitor_en),
+#endif
 #if RTW_SEQ_FILE_TEST
 	RTW_PROC_HDL_SEQ("seq_file_test", &seq_file_test, NULL),
 #endif

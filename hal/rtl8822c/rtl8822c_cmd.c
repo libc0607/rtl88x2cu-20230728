@@ -546,7 +546,12 @@ static void process_c2h_event(PADAPTER adapter, u8 *c2h, u32 size)
 		rtw_bf_c2h_handler(adapter, id, pc2h_data, c2h_len);
 		break;
 #endif /* CONFIG_BEAMFORMING */
-
+#ifdef CONFIG_BEAMFORMING_MONITOR
+	case CMD_ID_C2H_SND_TXBF:
+		RTW_INFO("BF_MONITOR %s: [CMD_ID_C2H_SND_TXBF] len=%d\n", __FUNCTION__, c2h_payload_len);
+		bf_monitor_c2h_snd_txbf(adapter, pc2h_data, c2h_len);
+		break;
+#endif /* CONFIG_BEAMFORMING_MONITOR */
 	case CMD_ID_C2H_AP_REQ_TXRPT:
 		/*RTW_INFO("[C2H], C2H_AP_REQ_TXRPT!!\n");*/
 		C2HTxRPTHandler_8822c(adapter, pc2h_data, c2h_len);
