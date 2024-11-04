@@ -101,7 +101,10 @@ struct csi_rpt_monitor {
 	u8 ng;
 	u8 codebook;
 	u8 token;
-	s8 snr[4];  // =4×(SNR_average–22), -10dB~+53.75dB, 0.25dB step 
+	s8 rx_pwr[4];   // per-path's pwdb
+	s8 rx_snr[4];   // per-path's SNR
+	u8 rx_evm[4];   // per-path's EVM
+	s8 snr[4];      // =4×(SNR_average–22), -10dB~+53.75dB, 0.25dB step 
 	u16 csi_matrix_len; // 80m=293(292.5)/234sc, 40m=135/108sc, 20m=65/52sc, 6bit_phi+4bit_psi
 	u8 csi_matrix[293]; 
 };
