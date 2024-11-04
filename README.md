@@ -27,7 +27,7 @@ Need test:
  - Thermal sensor default offset (the sensor readout code is working, but it needs a single-point calibration, so a default value needs to be set depending on some actual measurement)  
  - Single tone output (/proc, single_tone)  
  - Disable CCA (/proc, dis_cca)
- - Monitor mode transmit beamforming (compatible with 88x2cu/88x2eu, needs support on both TX/RX side, see [here](https://github.com/libc0607/rtl88x2eu-20230815/tree/beamforming_research) for usage)
+ - Monitor mode transmit beamforming ```bf_mon.sh``` (compatible with 88x2cu/88x2eu, needs support on both TX/RX side, see [here](https://github.com/libc0607/rtl88x2eu-20230815/tree/beamforming_research) for usage)
 
 Known bugs/issues:  
  - Short GI not working (not the radiotap header issue -- even when TXDESC is set by SET_TX_DESC_DATA_SHORT_8822C()). Maybe it's a firmware bug. But you should always use long GI on your drone so it doesn't matter  
@@ -35,7 +35,7 @@ Known bugs/issues:
  - LB-LINK said the issue above can be a power failure, and a proper 3.3V power supply is needed. I was using 3.3V/1A, so I recommend at least 3.3V/2A
 
 To-do:
- - Custom hardware module design using RTL88x2CU chip
+ - Custom hardware module design using RTL88x2CU chip: done, see [here](https://oshwhub.com/libc0607/rtl88x2cu_rfpa5542_20mm_demo_v1p0)  
  - ...
 
 
