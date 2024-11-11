@@ -5670,6 +5670,8 @@ static ssize_t proc_set_single_tone(struct file *file, const char __user *buffer
 
 	return count;
 }
+
+#ifdef CONFIG_BEAMFORMING_MONITOR
 static int proc_get_bf_monitor_conf(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
@@ -5819,6 +5821,7 @@ static ssize_t proc_set_bf_monitor_en(struct file *file, const char __user *buff
         RTW_INFO("bf_monitor_enable, %hhu \n", en);
 	return count;
 }
+#endif 
 
 /*
 * rtw_adapter_proc:
