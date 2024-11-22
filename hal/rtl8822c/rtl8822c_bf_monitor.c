@@ -525,7 +525,7 @@ void bf_monitor_print_cbr(PADAPTER adapter, struct seq_file *m)
     RTW_PRINT_SEL(m, "Sounding Dialog Token: %hhu\n", csi->token);
     for (i=0; i<(csi->nc+1); i++) {
         // tmp_snr: 0.01dB unit
-        tmp_snr = (csi->snr[i]*25) -1000;
+        tmp_snr = (csi->snr[i]*25) +2200;
         RTW_PRINT_SEL(m, "Average Signal to Noise Ratio (NDP's, seen from remote) - Stream %hhu: %d mBm\n", i, tmp_snr);
     }
     for (i=0; i<(csi->nc+1); i++) {
