@@ -9,6 +9,8 @@ BW=$6
 ACK_TIMEOUT=$7
 INTERVAL=$8
 
+TOKEN=0
+
 if [ "$OP" = "stop" ]; then 
 	echo "bf_mon: stop, reset status... "
 	echo "0 00:00:00:00:00:00 0 0" > /proc/net/$WLAN_DRV/$NIC/bf_monitor_conf
@@ -21,7 +23,11 @@ if [ "$OP" = "start" ]; then
 	echo "1 $REMOTE_MAC 0 0" > /proc/net/$WLAN_DRV/$NIC/bf_monitor_conf
 	echo $ACK_TIMEOUT > /proc/net/$WLAN_DRV/$NIC/ack_timeout
 	while true; do
-		echo "$LOCAL_MAC $REMOTE_MAC 0 0 0 $BW" > /proc/net/$WLAN_DRV/$NIC/bf_monitor_trig
+		echo "$LOCAL_MAC $REMOTE_MAC 0 0 $TOKEN $BW" > /proc/net/$WLAN_DRV/$NIC/bf_monitor_trig
+		TOKEN=$((TOKEN + 1))
+		if [ $TOKEN -eq 64 ]; then
+			TOKEN=0
+		fi
 		sleep $INTERVAL
 		echo "1" > /proc/net/$WLAN_DRV/$NIC/bf_monitor_en
 	done
