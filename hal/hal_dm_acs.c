@@ -297,17 +297,18 @@ void rtw_acs_info_dump(void *sel, _adapter *adapter)
 		hal_data->acs.scan_type ? 'A' : 'P', hal_data->acs.scan_time, hal_data->acs.igi, hal_data->acs.bw);
 
 	_RTW_PRINT_SEL(sel, "BW  20MHz\n");
-	_RTW_PRINT_SEL(sel, "%5s  %3s  %3s  %3s(%%)  %3s(%%)  %3s\n",
-						"Index", "CH", "BSS", "CLM", "NHM", "ITF");
+	_RTW_PRINT_SEL(sel, "%5s  %3s  %3s  %3s(%%)  %3s(%%)  %3s(%3s)  %3s\n",
+						"Index", "CH", "BSS", "CLM", "NHM", "NHM", "dBm", "ITF");
 
 	for (ch_idx = 0; ch_idx < chset->chs_len; ch_idx++) {
 		if (chset->chs[ch_idx].flags & RTW_CHF_DIS)
 			continue;
 		ch_num = rtw_get_ch_num_by_idx(adapter, ch_idx);
-		_RTW_PRINT_SEL(sel, "%5d  %3d  %3d  %6d  %6d  %3d\n",
+		_RTW_PRINT_SEL(sel, "%5d  %3d  %3d  %6d  %6d  %8d  %3d\n",
 						ch_idx, ch_num, hal_data->acs.bss_nums[ch_idx],
 						hal_data->acs.clm_ratio[ch_idx],
 						hal_data->acs.nhm_ratio[ch_idx],
+						hal_data->acs.env_mntr_rpt[ch_idx],
 						hal_data->acs.interference_time[ch_idx]);
 	}
 	#endif
@@ -437,9 +438,8 @@ void rtw_acs_current_info_dump(void *sel, _adapter *adapter)
 	}
 
 	_RTW_PRINT_SEL(sel, "Current BW %s\n", ch_width_str(bw));
-	if (0)
-		_RTW_PRINT_SEL(sel, "Current IGI 0x%02x\n", rtw_phydm_get_cur_igi(adapter));
-	_RTW_PRINT_SEL(sel, "CLM:%d, NHM:%d\n\n",
+	_RTW_PRINT_SEL(sel, "Current IGI 0x%02x\n", rtw_phydm_get_cur_igi(adapter));
+	_RTW_PRINT_SEL(sel, "CLM:%d, NHM:%d\n",
 		hal_data->acs.cur_ch_clm_ratio, hal_data->acs.cur_ch_nhm_ratio);
 }
 
