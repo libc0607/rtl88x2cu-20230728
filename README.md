@@ -28,6 +28,7 @@ Need test:
  - Single tone output (/proc, single_tone)  
  - Disable CCA (/proc, dis_cca)
  - Monitor mode transmit beamforming ```bf_mon.sh``` (compatible with 88x2cu/88x2eu, needs support on both TX/RX side, see [here](https://github.com/libc0607/rtl88x2eu-20230815/tree/beamforming_research) for usage)
+ - Channel state scanning (see [here](https://github.com/libc0607/rtl88x2eu-20230815?tab=readme-ov-file#noise-monitor-acs) for usage)  
 
 Known bugs/issues:  
  - Short GI not working (not the radiotap header issue -- even when TXDESC is set by SET_TX_DESC_DATA_SHORT_8822C()). Maybe it's a firmware bug. But you should always use long GI on your drone so it doesn't matter  
