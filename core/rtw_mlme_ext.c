@@ -14626,6 +14626,15 @@ operation_by_state:
 		val8 = 0; /* survey done */
 		rtw_hal_set_hwreg(padapter, HW_VAR_MLME_SITESURVEY, (u8 *)(&val8));
 
+                /* Dirty patch solving not receiving wfb-ng packets after doing scan
+                   Don't know the reason, but the call above breaks the connection,
+                   so just set monitor mode again here
+                */
+                if (check_fwstate(&padapter->mlmepriv, WIFI_MONITOR_STATE)) {
+                        val8 = _HW_STATE_MONITOR_;
+                        rtw_hal_set_hwreg(padapter, HW_VAR_SET_OPMODE, &val8);
+                }
+
 		/* turn on phy-dynamic functions */
 		rtw_phydm_ability_restore(padapter);
 
