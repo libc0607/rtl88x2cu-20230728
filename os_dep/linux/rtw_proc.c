@@ -3834,6 +3834,19 @@ static int proc_get_best_chan(struct seq_file *m, void *v)
 	return 0;
 }
 
+static int proc_get_acs_current_channel(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
+
+	if (IS_ACS_ENABLE(adapter))
+		rtw_acs_current_info_dump(m, adapter);
+	else
+		_RTW_PRINT_SEL(m,"ACS disabled\n");
+	return 0;
+}
+
+
 static ssize_t proc_set_acs(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
 {
 #ifdef CONFIG_RTW_ACS_DBG
@@ -6141,6 +6154,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 
 #ifdef CONFIG_RTW_ACS
 	RTW_PROC_HDL_SSEQ("acs", proc_get_best_chan, proc_set_acs),
+	RTW_PROC_HDL_SSEQ("acs_current", proc_get_acs_current_channel, NULL),
 	RTW_PROC_HDL_SSEQ("chan_info", proc_get_chan_info, NULL),
 #endif
 

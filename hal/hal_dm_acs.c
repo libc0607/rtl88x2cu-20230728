@@ -451,7 +451,7 @@ void rtw_acs_update_current_info(_adapter *adapter)
 	hal_data->acs.cur_ch_nhm_ratio = rtw_phydm_nhm_ratio(adapter);
 
 	#ifdef CONFIG_RTW_ACS_DBG
-	rtw_acs_current_info_dump(RTW_DBGDUMP, adapter);
+	//rtw_acs_current_info_dump(RTW_DBGDUMP, adapter);
 	#endif
 }
 /*
