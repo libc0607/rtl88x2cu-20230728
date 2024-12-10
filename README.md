@@ -31,6 +31,7 @@ Need test:
  - Channel state scanning (see [here](https://github.com/libc0607/rtl88x2eu-20230815?tab=readme-ov-file#noise-monitor-acs) for usage)  
 
 Known bugs/issues:  
+ - [Injection instability on 40MHz channels](https://github.com/libc0607/rtl88x2eu-20230815/issues/7) -- help wanted  
  - Short GI not working (not the radiotap header issue -- even when TXDESC is set by SET_TX_DESC_DATA_SHORT_8822C()). Maybe it's a firmware bug. But you should always use long GI on your drone so it doesn't matter  
  - ~~Set txpower by ```iw``` higher than a certain (depends on the module, but significantly higher than the factory) value will cause tx to hang, and cannot be recovered unless manually reset the adaptor. Not sure if it's a power issue caused by poor PCB trace width inside the module (it's reasonable to not use an inner power plane for a \~300mA total chip...), some firmware bug, or even some analog silicon bug (latch-up?). Not caused by high temperature (water cooling tested, still), or any high TX traffic. Weird...~~
  - LB-LINK said the issue above can be a power failure, and a proper 3.3V power supply is needed. I was using 3.3V/1A, so I recommend at least 3.3V/2A
