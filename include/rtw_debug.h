@@ -295,7 +295,7 @@ void bb_reg_dump(void *sel, _adapter *adapter);
 void bb_reg_dump_ex(void *sel, _adapter *adapter);
 void rf_reg_dump(void *sel, _adapter *adapter);
 
-void rtw_sink_rtp_seq_dbg(_adapter *adapter, u8 *ehdr_pos);
+void rtw_sink_rtp_seq_dbg(_adapter *adapter, u8 *ehdr_pos, u16 wifi_seq);
 
 struct sta_info;
 void sta_rx_reorder_ctl_dump(void *sel, struct sta_info *sta);
@@ -540,6 +540,27 @@ int proc_get_wakeup_reason(struct seq_file *m, void *v);
 #ifdef CONFIG_WOW_KEEP_ALIVE_PATTERN
 int proc_dump_wow_keep_alive_info(struct seq_file *m, void *v);
 #endif /*CONFIG_WOW_KEEP_ALIVE_PATTERN*/
+#ifdef CONFIG_MDNS_OFFLOAD
+ssize_t proc_set_wow_mdns_resp(struct file *file, const char __user *buffer,
+			       size_t count, loff_t *pos, void *data);
+int proc_get_wow_mdns_resp(struct seq_file *m, void *v);
+ssize_t proc_set_wow_mdns_match_criteria(struct file *file,
+					 const char __user *buffer,
+					 size_t count, loff_t *pos, void *data);
+int proc_get_wow_mdns_match_criteria(struct seq_file *m, void *v);
+ssize_t proc_set_wow_mdns_passthru_list(struct file *file,
+					const char __user *buffer,
+					size_t count, loff_t *pos, void *data);
+int proc_get_wow_mdns_passthru_list(struct seq_file *m, void *v);
+ssize_t proc_set_wow_mdns_offload_state(struct file *file,
+					const char __user *buffer,
+					size_t count, loff_t *pos, void *data);
+int proc_get_wow_mdns_offload_state(struct seq_file *m, void *v);
+ssize_t proc_set_wow_mdns_passthru_behavior(struct file *file,
+					    const char __user *buffer,
+					    size_t count, loff_t *pos, void *data);
+int proc_get_wow_mdns_passthru_behavior(struct seq_file *m, void *v);
+#endif /* CONFIG_MDNS_OFFLOAD */
 #endif
 
 #ifdef CONFIG_WAR_OFFLOAD

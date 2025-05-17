@@ -33,9 +33,9 @@ void rtl8822c_init_hal_spec(PADAPTER adapter)
 	/* hal_spec->sec_cam_ent_num follow halmac setting */
 	hal_spec->sec_cap = SEC_CAP_CHK_BMC | SEC_CAP_CHK_EXTRA_SEC;
 #ifdef CONFIG_USB_HCI
-	hal_spec->wow_cap = WOW_CAP_TKIP_OL/* | WOW_CAP_CSA*/ | WOW_CAP_DIS_INBAND_SIGNAL;
+	hal_spec->wow_cap = WOW_CAP_TKIP_OL/* | WOW_CAP_CSA | WOW_CAP_MDNS */| WOW_CAP_DIS_INBAND_SIGNAL;
 #else
-	hal_spec->wow_cap = WOW_CAP_TKIP_OL/* | WOW_CAP_CSA*/;
+	hal_spec->wow_cap = WOW_CAP_TKIP_OL/* | WOW_CAP_CSA | WOW_CAP_MDNS */;
 #endif
 	hal_spec->macid_cap = MACID_DROP;
 	hal_spec->txpause_cap = TXPAUSE_CAP_FW_CTRL;

@@ -71,7 +71,7 @@ void bss_cap_update_on_sta_join(_adapter *padapter, struct sta_info *psta);
 u8 bss_cap_update_on_sta_leave(_adapter *padapter, struct sta_info *psta);
 void sta_info_update(_adapter *padapter, struct sta_info *psta);
 void ap_sta_info_defer_update(_adapter *padapter, struct sta_info *psta);
-u8 ap_free_sta(_adapter *padapter, struct sta_info *psta, bool active, u16 reason, bool enqueue);
+u8 ap_free_sta(_adapter *padapter, struct sta_info *psta, bool active, u8 subtype, u16 reason, bool enqueue);
 int rtw_sta_flush(_adapter *padapter, bool enqueue);
 void start_ap_mode(_adapter *padapter);
 void stop_ap_mode(_adapter *padapter);

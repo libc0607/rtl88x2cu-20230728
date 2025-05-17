@@ -612,6 +612,13 @@ uint	 rtw_hal_init(_adapter *padapter)
 	PHAL_DATA_TYPE pHalData = GET_HAL_DATA(padapter);
 	int i;
 
+#ifdef CONFIG_HAL_PREINIT
+	if (rtw_get_hal_pre_inited(padapter) == _TRUE) {
+		rtw_set_hal_pre_inited(padapter, _FALSE);
+		return status;
+	}
+#endif
+
 	halrf_set_rfsupportability(adapter_to_phydm(padapter));
 
 	status = padapter->hal_func.hal_init(padapter);
@@ -686,6 +693,12 @@ uint rtw_hal_deinit(_adapter *padapter)
 	if (status == _SUCCESS) {
 		rtw_led_control(padapter, LED_CTL_POWER_OFF);
 		rtw_set_hw_init_completed(padapter, _FALSE);
+#ifdef CONFIG_HAL_PREINIT
+		if (rtw_get_hal_pre_inited(padapter) == _TRUE) {
+			RTW_INFO("rtw_hal_deinit with hal_pre_inited\n");
+			rtw_set_hal_pre_inited(padapter, _FALSE);
+		}
+#endif
 	} else
 		RTW_INFO("\n rtw_hal_deinit: hal_init fail\n");
 

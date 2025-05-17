@@ -472,7 +472,10 @@ typedef	enum _RT_EEPROM_TYPE {
 	EEPROM_BOOT_EFUSE,
 } RT_EEPROM_TYPE, *PRT_EEPROM_TYPE;
 
-
+#ifdef CONFIG_HAL_PREINIT
+#define rtw_set_hal_pre_inited(adapter, set) (adapter_to_dvobj(adapter)->hal_pre_inited = set)
+#define rtw_get_hal_pre_inited(adapter) (adapter_to_dvobj(adapter)->hal_pre_inited)
+#endif
 
 #define RF_CHANGE_BY_INIT	0
 #define RF_CHANGE_BY_IPS	BIT28

@@ -126,11 +126,11 @@ void phydm_mp_set_single_tone_jgr3(void *dm_void, boolean is_single_tone,
 			for (i = start; i <= end; i++) {
 				if (i < max_rf_path) {
 					odm_set_rf_reg(dm, i, RF_0x5, BIT(0), 0x0);
-					mp->rf0[i] = odm_get_rf_reg(dm, i, RF_0x0, RFREG_MASK);
+					mp->rf0[RF_PATH_MEM_SIZE-1] = odm_get_rf_reg(dm, i, RF_0x0, RFREG_MASK);
 					/*Tx mode: RF0x00[19:16]=4'b0010 */
 					odm_set_rf_reg(dm, i, RF_0x0, 0xF0000, 0x2);
 					/*Lowest RF gain index: RF_0x1[5:0] TX power*/
-					mp->rf1[i] = odm_get_rf_reg(dm, i, RF_0x1, RFREG_MASK);
+					mp->rf1[RF_PATH_MEM_SIZE-1] = odm_get_rf_reg(dm, i, RF_0x1, RFREG_MASK);
 					odm_set_rf_reg(dm, i, RF_0x1, 0x3f, 0x0);//TX power
 					/*RF LO enabled */
 					odm_set_rf_reg(dm, i, RF_0x58, BIT(1), 0x1);
@@ -191,8 +191,8 @@ void phydm_mp_set_single_tone_jgr3(void *dm_void, boolean is_single_tone,
 		if(dm->support_ic_type & (ODM_RTL8723F | ODM_RTL8735B | ODM_RTL8730A)) {
 			for (i = start; i <= end; i++) {
 				if (i < max_rf_path) {
-					odm_set_rf_reg(dm, i, RF_0x0, RFREG_MASK, mp->rf0[i]);
-					odm_set_rf_reg(dm, i, RF_0x1, RFREG_MASK, mp->rf1[i]);
+					odm_set_rf_reg(dm, i, RF_0x0, RFREG_MASK, mp->rf0[RF_PATH_MEM_SIZE-1]);
+					odm_set_rf_reg(dm, i, RF_0x1, RFREG_MASK, mp->rf1[RF_PATH_MEM_SIZE-1]);
 					/*RF LO disabled */
 					odm_set_rf_reg(dm, i, RF_0x58, BIT(1), 0x0);
 					odm_set_rf_reg(dm, i, RF_0x5, BIT(0), 0x1);

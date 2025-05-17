@@ -465,8 +465,8 @@ void Init_ODM_ComInfo(_adapter *adapter)
 	halrf_cmn_info_init(pDM_Odm, HALRF_CMNINFO_PWT_TYPE, 0);
 	halrf_cmn_info_init(pDM_Odm, HALRF_CMNINFO_MP_POWER_TRACKING_TYPE, pHalData->txpwr_pg_mode);
 
-	if (rtw_odm_adaptivity_needed(adapter) == _TRUE)
-		rtw_odm_adaptivity_config_msg(RTW_DBGDUMP, adapter);
+	if (rtw_cfg_adaptivity_needed(adapter) == _TRUE)
+		rtw_cfg_adaptivity_config_msg(RTW_DBGDUMP, adapter);
 
 #ifdef CONFIG_IQK_PA_OFF
 	odm_cmn_info_init(pDM_Odm, ODM_CMNINFO_IQKPAOFF, 1);
@@ -1711,12 +1711,14 @@ static u8 _rtw_phydm_rfk_condition_check(_adapter *adapter, u8 is_scaning, u8 if
 	#endif
 
 	if (ifs_linked) {
-		if (is_scaning) {
+		if (adapter_to_rfctl(adapter)->offch_state != OFFCHS_NONE) {
+			rfk_allowed = _FALSE;
+			RTW_DBG("[RFK-CHK] RF-K not allowed due to offch_state\n");
+		} else if (is_scaning) {
 			rfk_allowed = _FALSE;
 			RTW_DBG("[RFK-CHK] RF-K not allowed due to ifaces under site-survey\n");
-		}
-		else {
-			rfk_allowed = rtw_mi_stayin_union_ch_chk(adapter) ? _TRUE : _FALSE;
+		} else {
+			rfk_allowed = rtw_mi_stayin_union_ch_chk(adapter, true) ? _TRUE : _FALSE;
 			if (rfk_allowed == _FALSE)
 				RTW_ERR("[RFK-CHK] RF-K not allowed due to ld_iface not stayin union ch\n");
 		}

@@ -942,7 +942,7 @@ mpt_SetSingleTone_8814A(
 
 		if (bEnPMacTx == FALSE) {
 			hal_mpt_SetContinuousTx(pAdapter, _TRUE);
-			issue_nulldata(pAdapter, NULL, 1, 3, 500);
+			issue_nulldata(pAdapter, NULL, 1, 3, PS_ANNC_DRV_RETRY_INT_MS);
 		}
 
 		phy_set_bb_reg(pAdapter, rCCAonSec_Jaguar, BIT1, 0x1); /*/ Disable CCA*/

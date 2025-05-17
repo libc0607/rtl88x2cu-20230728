@@ -112,6 +112,10 @@ void phydm_sdm_reset_8822c(struct dm_struct *dm)
 	odm_set_rf_reg(dm, RF_PATH_A, RF_0xbc, BIT(19), 0x0);
 	odm_set_rf_reg(dm, RF_PATH_A, RF_0xbc, BIT(19), 0x1);
 	odm_set_rf_reg(dm, RF_PATH_A, RF_0xbc, BIT(19), 0x0);
+	/*write rf dummy register*/
+	odm_set_rf_reg(dm, RF_PATH_B, 0xff, BIT(19), 0x0);
+	odm_set_rf_reg(dm, RF_PATH_B, 0xff, BIT(19), 0x1);
+	odm_set_rf_reg(dm, RF_PATH_B, 0xff, BIT(19), 0x0);
 	/*reset HSSI*/
 	phydm_rstb_3wire_8822c(dm, true);
 }
@@ -1427,11 +1431,17 @@ void
 phydm_tx_dfir_setting_8822c(struct dm_struct *dm, u8 central_ch)
 {
 	if (central_ch <= 14) {
+		if (central_ch == 11)
+			odm_set_bb_reg(dm, R_0x808, 0x700000, 0x3);
+		else
+			odm_set_bb_reg(dm, R_0x808, 0x700000, 0x1);
+
 		if (central_ch == 13)
 			odm_set_bb_reg(dm, R_0x808, 0x70, 0x3);
 		else
 			odm_set_bb_reg(dm, R_0x808, 0x70, 0x1);
 	} else {
+		odm_set_bb_reg(dm, R_0x808, 0x700000, 0x1);
 		odm_set_bb_reg(dm, R_0x808, 0x70, 0x3);
 	}
 }

@@ -16,7 +16,7 @@
 #define __RTW_MI_H_
 
 void rtw_mi_update_union_chan_inf(_adapter *adapter, u8 ch, u8 offset , u8 bw);
-u8 rtw_mi_stayin_union_ch_chk(_adapter *adapter);
+u8 rtw_mi_stayin_union_ch_chk(_adapter *adapter, bool fail_detail);
 u8 rtw_mi_stayin_union_band_chk(_adapter *adapter);
 
 int rtw_mi_get_ch_setting_union_by_ifbmp(struct dvobj_priv *dvobj, u8 ifbmp, u8 *ch, u8 *bw, u8 *offset);
@@ -305,11 +305,7 @@ _adapter *rtw_get_iface_by_macddr(_adapter *padapter, const u8 *mac_addr);
 _adapter *rtw_get_iface_by_hwport(_adapter *padapter, u8 hw_port);
 
 void rtw_mi_buddy_clone_bcmc_packet(_adapter *padapter, union recv_frame *precvframe, u8 *pphy_status);
-
-#ifdef CONFIG_PCI_HCI
-/*API be create temporary for MI, caller is interrupt-handler, PCIE's interrupt handler cannot apply to multi-AP*/
 _adapter *rtw_mi_get_ap_adapter(_adapter *padapter);
-#endif
 
 u8 rtw_mi_get_ifbmp_by_hwband(struct dvobj_priv *dvobj, u8 band_idx);
 _adapter *rtw_mi_get_iface_by_hwband(struct dvobj_priv *dvobj, u8 band_idx);

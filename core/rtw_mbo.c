@@ -733,7 +733,7 @@ int rtw_mbo_proc_non_pref_chans_get(
 
 	for (i=0; i < prpt->nm_of_rpt; i++) {
 		pch = &prpt->ch_rpt[i];
-		_rtw_memset(buf, 0, sizeof(buf));
+		_rtw_memset(buf, 0, 512);
 		offset = 0;
 
 		for (j=0; j < pch->nm_of_ch; j++)

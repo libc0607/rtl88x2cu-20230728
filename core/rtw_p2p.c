@@ -38,7 +38,6 @@ int is_any_client_associated(_adapter *padapter)
 
 static u32 go_add_group_info_attr(struct wifidirect_info *pwdinfo, u8 *pbuf)
 {
-	_irqL irqL;
 	_list	*phead, *plist;
 	u32 len = 0;
 	u16 attr_len = 0;
@@ -59,7 +58,7 @@ static u32 go_add_group_info_attr(struct wifidirect_info *pwdinfo, u8 *pbuf)
 	pstart = pdata_attr;
 	pcur = pdata_attr;
 
-	_enter_critical_bh(&pstapriv->asoc_list_lock, &irqL);
+	rtw_stapriv_asoc_list_lock(pstapriv);
 	phead = &pstapriv->asoc_list;
 	plist = get_next(phead);
 
@@ -126,7 +125,7 @@ static u32 go_add_group_info_attr(struct wifidirect_info *pwdinfo, u8 *pbuf)
 
 
 	}
-	_exit_critical_bh(&pstapriv->asoc_list_lock, &irqL);
+	rtw_stapriv_asoc_list_unlock(pstapriv);
 
 	if (attr_len > 0)
 		len = rtw_set_p2p_attr_content(pbuf, P2P_ATTR_GROUP_INFO, attr_len, pdata_attr);
@@ -2404,10 +2403,9 @@ u32 process_p2p_devdisc_req(struct wifidirect_info *pwdinfo, u8 *pframe, uint le
 			    _rtw_memcmp(pwdinfo->p2p_group_ssid, groupid + ETH_ALEN, pwdinfo->p2p_group_ssid_len)) {
 				attr_contentlen = sizeof(dev_addr);
 				if (rtw_get_p2p_attr_content(p2p_ie, p2p_ielen, P2P_ATTR_DEVICE_ID, dev_addr, &attr_contentlen)) {
-					_irqL irqL;
 					_list	*phead, *plist;
 
-					_enter_critical_bh(&pstapriv->asoc_list_lock, &irqL);
+					rtw_stapriv_asoc_list_lock(pstapriv);
 					phead = &pstapriv->asoc_list;
 					plist = get_next(phead);
 
@@ -2420,10 +2418,10 @@ u32 process_p2p_devdisc_req(struct wifidirect_info *pwdinfo, u8 *pframe, uint le
 						if (psta->is_p2p_device && (psta->dev_cap & P2P_DEVCAP_CLIENT_DISCOVERABILITY) &&
 						    _rtw_memcmp(psta->dev_addr, dev_addr, ETH_ALEN)) {
 
-							/* _exit_critical_bh(&pstapriv->asoc_list_lock, &irqL); */
+							/* rtw_stapriv_asoc_list_unlock(pstapriv); */
 							/* issue GO Discoverability Request */
 							issue_group_disc_req(pwdinfo, psta->cmn.mac_addr);
-							/* _enter_critical_bh(&pstapriv->asoc_list_lock, &irqL); */
+							/* rtw_stapriv_asoc_list_lock(pstapriv); */
 
 							status = P2P_STATUS_SUCCESS;
 
@@ -2432,7 +2430,7 @@ u32 process_p2p_devdisc_req(struct wifidirect_info *pwdinfo, u8 *pframe, uint le
 							status = P2P_STATUS_FAIL_INFO_UNAVAILABLE;
 
 					}
-					_exit_critical_bh(&pstapriv->asoc_list_lock, &irqL);
+					rtw_stapriv_asoc_list_unlock(pstapriv);
 
 				} else
 					status = P2P_STATUS_FAIL_INVALID_PARAM;
@@ -2679,7 +2677,7 @@ u8 process_p2p_group_negotation_req(struct wifidirect_info *pwdinfo, u8 *pframe,
 				_rtw_memset(pwdinfo->p2p_peer_interface_addr, 0x00, ETH_ALEN);
 		}
 
-		ch_cnt = sizeof(ch_content);
+		ch_cnt = 100;
 		if (rtw_get_p2p_attr_content(p2p_ie, p2p_ielen, P2P_ATTR_CH_LIST, ch_content, &ch_cnt)) {
 			peer_ch_num = rtw_p2p_get_peer_ch_list(pwdinfo, ch_content, ch_cnt, peer_ch_list);
 			ch_num_inclusioned = rtw_p2p_ch_inclusion(padapter, peer_ch_list, peer_ch_num, ch_list_inclusioned);
@@ -3248,6 +3246,13 @@ static bool rtw_chk_p2pie_ch_list_with_buddy(_adapter *padapter, const u8 *frame
 	u8 *ies, *p2p_ie;
 	u32 ies_len, p2p_ielen;
 	u8 union_ch = rtw_mi_get_union_chan(padapter);
+
+#ifdef CONFIG_MCC_MODE
+	if (MCC_EN(padapter)) {
+		fit = _TRUE;
+		return fit;
+	}
+#endif /* CONFIG_MCC_MODE */
 
 	ies = (u8 *)(frame_body + _PUBLIC_ACTION_IE_OFFSET_);
 	ies_len = len - _PUBLIC_ACTION_IE_OFFSET_;
@@ -4097,7 +4102,7 @@ int process_p2p_cross_connect_ie(PADAPTER padapter, u8 *IEs, u32 IELength)
 
 	while (p2p_ie) {
 		/* Get P2P Manageability IE. */
-		attr_contentlen = sizeof(p2p_attr);
+		attr_contentlen = MAX_P2P_IE_LEN;
 		if (rtw_get_p2p_attr_content(p2p_ie, p2p_ielen, P2P_ATTR_MANAGEABILITY, p2p_attr, &attr_contentlen)) {
 			if ((p2p_attr[0] & (BIT(0) | BIT(1))) == 0x01)
 				ret = _FALSE;
@@ -4249,6 +4254,8 @@ void p2p_ps_wk_hdl(_adapter *padapter, u8 p2p_ps_state)
 			return;
 		}
 		if (pwdinfo->p2p_ps_mode > P2P_PS_NONE) {
+/*	do not need thise warning message due to FW already handle this case*/
+#if 0
 #ifdef CONFIG_MCC_MODE
 			if (MCC_EN(padapter)) {
 				if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_DOING_MCC)) {
@@ -4258,6 +4265,7 @@ void p2p_ps_wk_hdl(_adapter *padapter, u8 p2p_ps_state)
 
 			}
 #endif /* CONFIG_MCC_MODE */
+#endif
 			pwdinfo->p2p_ps_state = p2p_ps_state;
 
 #ifdef CONFIG_LPS

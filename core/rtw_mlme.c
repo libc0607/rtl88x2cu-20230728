@@ -2375,6 +2375,7 @@ void rtw_reset_rx_info(_adapter *adapter)
 	precvpriv->dbg_rx_ampdu_window_shift_cnt = 0;
 	precvpriv->dbg_rx_drop_count = 0;
 	precvpriv->dbg_rx_conflic_mac_addr_cnt = 0;
+	precvpriv->rtp_drop_count = 0;
 }
 
 /*
@@ -3361,7 +3362,6 @@ exit:
 void rtw_sta_timeout_event_callback(_adapter *adapter, u8 *pbuf)
 {
 #ifdef CONFIG_AP_MODE
-	_irqL irqL;
 	struct sta_info *psta;
 	struct stadel_event *pstadel = (struct stadel_event *)pbuf;
 	struct sta_priv *pstapriv = &adapter->stapriv;
@@ -3371,17 +3371,12 @@ void rtw_sta_timeout_event_callback(_adapter *adapter, u8 *pbuf)
 	if (psta) {
 		u8 updated = _FALSE;
 
-		_enter_critical_bh(&pstapriv->asoc_list_lock, &irqL);
+		rtw_stapriv_asoc_list_lock(pstapriv);
 		if (rtw_is_list_empty(&psta->asoc_list) == _FALSE) {
-			rtw_list_delete(&psta->asoc_list);
-			pstapriv->asoc_list_cnt--;
-			#ifdef CONFIG_RTW_TOKEN_BASED_XMIT
-			if (psta->tbtx_enable)
-				pstapriv->tbtx_asoc_list_cnt--;
-			#endif
-			updated = ap_free_sta(adapter, psta, _TRUE, WLAN_REASON_PREV_AUTH_NOT_VALID, _TRUE);
+			rtw_stapriv_asoc_list_del(pstapriv, psta);
+			updated = ap_free_sta(adapter, psta, _TRUE, 0, WLAN_REASON_PREV_AUTH_NOT_VALID, _TRUE);
 		}
-		_exit_critical_bh(&pstapriv->asoc_list_lock, &irqL);
+		rtw_stapriv_asoc_list_unlock(pstapriv);
 
 		associated_clients_update(adapter, updated, STA_INFO_UPDATE_ALL);
 	}
@@ -4544,30 +4539,38 @@ candidate_exist:
 
 #if defined(CONFIG_CONCURRENT_MODE) && defined(CONFIG_AP_MODE)
 {
-	u8 ifbmp = 0;
-	u8 csa_cnt;
-	struct mi_state mstate;
-	struct rf_ctl_t *rfctl;
+#ifdef CONFIG_MCC_MODE
+	if (!MCC_EN(adapter)) {
+#endif
+		u8 ifbmp = 0;
+		u8 csa_cnt;
+		struct mi_state mstate;
+		struct rf_ctl_t *rfctl;
 
-	rfctl = adapter_to_rfctl(adapter);
-	csa_cnt = rfctl->ap_csa_cnt_input;
-	ifbmp = rtw_mi_get_ap_mesh_ifbmp(adapter);
-	rtw_mi_status_no_self(adapter, &mstate);
+		rfctl = adapter_to_rfctl(adapter);
+		csa_cnt = rfctl->ap_csa_cnt_input;
+		ifbmp = rtw_mi_get_ap_mesh_ifbmp(adapter);
+		rtw_mi_status_no_self(adapter, &mstate);
 
-	if (csa_cnt > 0 && ifbmp && MSTATE_AP_LD_NUM(&mstate) &&
-		rtw_mi_get_union_chan(adapter) != candidate->network.Configuration.DSConfig) {
-		rfctl->ap_csa_en = CSA_STA_JOINBSS;
-		rfctl->ap_csa_wait_update_bcn = 0;
-		rfctl->ap_csa_switch_cnt = csa_cnt;
-		rtw_bss_get_chbw(&(candidate->network), &rfctl->ap_csa_ch
-			, &rfctl->ap_csa_ch_width, &rfctl->ap_csa_ch_offset, 1, 1);
-		rtw_set_ap_csa_cmd(adapter);
+		if (csa_cnt > 0 && ifbmp && MSTATE_AP_LD_NUM(&mstate) &&
+			rtw_mi_get_union_chan(adapter) != candidate->network.Configuration.DSConfig) {
+			rfctl->ap_csa_en = CSA_STA_JOINBSS;
+			rfctl->ap_csa_wait_update_bcn = 0;
+			rfctl->ap_csa_switch_cnt = csa_cnt;
+			rtw_bss_get_chbw(&(candidate->network), &rfctl->ap_csa_ch
+				, &rfctl->ap_csa_ch_width, &rfctl->ap_csa_ch_offset, 1, 1);
+			rtw_set_ap_csa_cmd(adapter);
 
-		/* Store candidata network until softap switch channel done */
-		_rtw_memcpy(&(pmlmepriv->candidate_network), candidate, sizeof(struct wlan_network));
-		ret = _SUCCESS;
-		goto exit;
+			/* Store candidata network until softap switch channel done */
+			_rtw_memcpy(&(pmlmepriv->candidate_network), candidate, sizeof(struct wlan_network));
+			ret = _SUCCESS;
+			goto exit;
+		}
+#ifdef CONFIG_MCC_MODE
+	} else {
+		RTW_INFO("[MCC] bypass CSA for MCC\n");
 	}
+#endif
 }
 #endif
 
@@ -5117,6 +5120,7 @@ void rtw_joinbss_reset(_adapter *padapter)
 	pmlmepriv->num_FortyMHzIntolerant = 0;
 
 	pmlmepriv->num_sta_no_ht = 0;
+	pmlmepriv->sw_to_20mhz = _FALSE;
 
 	phtpriv->ampdu_enable = _FALSE;/* reset to disabled */
 

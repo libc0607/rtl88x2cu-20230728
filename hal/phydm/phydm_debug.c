@@ -1168,7 +1168,10 @@ void phydm_basic_dbg_msg_cli_win(void *dm_void, char *buf)
 	u8 ss_ofst = 0;
 	struct cmn_sta_info *entry = NULL;
 	char dbg_buf[PHYDM_SNPRINT_SIZE] = {0};
-
+	static char bw[CHANNEL_WIDTH_MAX+1][MAX_ARGC] = { {"20"}, {"40"},
+							 {"80"}, {"160"},
+							 {"80+80"}, {"5"},
+							 {"10"}, {"MAX"}};
 
 	RT_SPRINTF(buf, DBGM_CLI_BUF_SIZE, "\r\n PHYDM Common Dbg Msg --------->");
 	RT_PRINT(buf);
@@ -1176,8 +1179,8 @@ void phydm_basic_dbg_msg_cli_win(void *dm_void, char *buf)
 	RT_PRINT(buf);
 
 	if (dm->is_linked) {
-		RT_SPRINTF(buf, DBGM_CLI_BUF_SIZE, "\r\n ID=((%d)), BW=((%d)), fc=((CH-%d))",
-			   dm->curr_station_id, 20 << *dm->band_width, *dm->channel);
+		RT_SPRINTF(buf, DBGM_CLI_BUF_SIZE, "\r\n ID=((%d)), BW=((%s)), fc=((CH-%d))",
+			   dm->curr_station_id, bw[*dm->band_width], *dm->channel);
 		RT_PRINT(buf);
 
 		if (((*dm->channel <= 14) && (*dm->band_width == CHANNEL_WIDTH_40)) &&
@@ -2387,9 +2390,13 @@ void phydm_basic_dbg_msg_linked(void *dm_void)
 	struct cmn_sta_info *entry = NULL;
 	struct phydm_cfo_rpt cfo;
 	u8 i = 0;
+	static char bw[CHANNEL_WIDTH_MAX+1][MAX_ARGC] = { {"20"}, {"40"},
+							 {"80"}, {"160"},
+							 {"80+80"}, {"5"},
+							 {"10"}, {"MAX"}};
 
-	PHYDM_DBG(dm, DBG_CMN, "ID=((%d)), BW=((%d)), fc=((CH-%d))\n",
-		  dm->curr_station_id, 20 << *dm->band_width, *dm->channel);
+	PHYDM_DBG(dm, DBG_CMN, "ID=((%d)), BW=((%s)), fc=((CH-%d))\n",
+		  dm->curr_station_id, bw[*dm->band_width], *dm->channel);
 
 	#ifdef ODM_IC_11N_SERIES_SUPPORT
 	#ifdef PHYDM_PRIMARY_CCA
@@ -2727,8 +2734,8 @@ void phydm_basic_dbg_message(void *dm_void)
 		  fa_t->cnt_ht_crc32_error, fa_t->cnt_vht_crc32_error,
 		  fa_t->cnt_crc32_error_all);
 	PHYDM_DBG(dm, DBG_CMN_OTHER,
-		  "[MPDU CRC32 Cnt] {OK, Error} = {%d, %d}\n",
-		  fa_t->cnt_mpdu_crc32_ok, fa_t->cnt_mpdu_crc32_error);
+		  "[MPDU CRC32 Cnt] {OK, Error, Miss} = {%d, %d, %d}\n",
+		  fa_t->cnt_mpdu_crc32_ok, fa_t->cnt_mpdu_crc32_error, fa_t->cnt_mpdu_miss);
 	PHYDM_DBG(dm, DBG_CMN_OTHER,
 		  "[MAC664 Cnt] {Type, Report}= {%d, %d}\n",
 		  fa_t->cnt_mac664_type, fa_t->cnt_mac664_report);
@@ -2743,6 +2750,12 @@ void phydm_basic_dbg_message(void *dm_void)
 			  "is_linked = %d, Num_client = %d, rssi_min = %d, IGI = 0x%x\n",
 			  dm->is_linked, dm->number_linked_client, dm->rssi_min,
 			  dm->dm_dig_table.cur_ig_value);
+
+	#if (RTL8822E_SUPPORT)
+	if (dm->support_ic_type & (ODM_RTL8822E)) {
+		PHYDM_DBG(dm, DBG_CMN, "bt_is_linked = %d, btc_rssi_en = %d, cck_rssi_th = %d, btc_mcs_rssi_en = %d\n", dm->bt_is_linked, dm->btc_rssi_processing, dm->bt_cck_rssi_th, dm->btc_mcs_rssi_en);
+	}
+	#endif
 
 	PHYDM_DBG(dm, DBG_CMN,
 		  "ratio{nhm, nhm_env, clm, idle, tx}={%d, %d, %d, %d, %d}, nhm_pwr=%d\n",
@@ -4443,6 +4456,10 @@ void phydm_per_tone_evm(void *dm_void, char input[][16], u32 *_used,
 	s8 rxevm_0, rxevm_1;
 	s32 avg_num, evm_tone_0[256] = {0}, evm_tone_1[256] = {0};
 	s32 rxevm_sum_0, rxevm_sum_1;
+	static char bw[CHANNEL_WIDTH_MAX+1][MAX_ARGC] = { {"20"}, {"40"},
+							 {"80"}, {"160"},
+							 {"80+80"}, {"5"},
+							 {"10"}, {"MAX"}};
 
 	if (dm->support_ic_type & ODM_IC_11N_SERIES) {
 		pr_debug("n series not support yet !\n");
@@ -4466,8 +4483,15 @@ void phydm_per_tone_evm(void *dm_void, char input[][16], u32 *_used,
 		return;
 	}
 
-	pr_debug("ID=((%d)), BW=((%d)), fc=((CH-%d))\n", dm->curr_station_id,
-		 20 << *dm->band_width, *dm->channel);
+	if (round > 10000)
+		round = 10000;
+	if (avg_num > 10000)
+		avg_num = 10000;
+	if (avg_num == 0)
+		avg_num = 1;
+
+	pr_debug("ID=((%d)), BW=((%s)), fc=((CH-%d))\n", dm->curr_station_id,
+		 bw[*dm->band_width], *dm->channel);
 	pr_debug("avg_num =((%d)), round =((%d))\n", avg_num, round);
 #if (DM_ODM_SUPPORT_TYPE & ODM_AP)
 	watchdog_stop(dm->priv);
@@ -4922,13 +4946,17 @@ void phydm_mp_dbg(void *dm_void, char input[][16], u32 *_used, char *output,
 	u16 buf_size = PHYDM_SNPRINT_SIZE;
 	u16 th_size = PHY_HIST_SIZE - 1;
 	u8 i = 0;
+	static char bw[CHANNEL_WIDTH_MAX+1][MAX_ARGC] = { {"20"}, {"40"},
+							 {"80"}, {"160"},
+							 {"80+80"}, {"5"},
+							 {"10"}, {"MAX"}};
 
 	if (!(*dm->mp_mode))
 		return;
 
 	PDM_SNPF(out_len, used, output + used, out_len - used,
-		 "BW=((%d)), fc=((CH-%d))\n",
-		 20 << *dm->band_width, *dm->channel);
+		 "BW=((%s)), fc=((CH-%d))\n",
+		 bw[*dm->band_width], *dm->channel);
 
 	/*@===[PHY Histogram]================================================*/
 	PDM_SNPF(out_len, used, output + used, out_len - used,
@@ -5187,6 +5215,9 @@ u16 phydm_get_agc_rf_gain(void *dm_void, boolean is_mod, u8 tab, u8 mp_gain_i)
 {
 	struct dm_struct *dm = (struct dm_struct *)dm_void;
 	u16 rf_gain = 0x0;
+
+	if (tab >= 16 || mp_gain_i >= 64)
+		return rf_gain;
 
 	if (is_mod)
 		rf_gain = dm->agc_rf_gain[tab][mp_gain_i];

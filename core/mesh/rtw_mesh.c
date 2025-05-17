@@ -468,11 +468,11 @@ struct sta_info *rtw_mesh_acnode_prevent_pick_sacrifice(_adapter *adapter)
 	struct sta_priv *stapriv = &adapter->stapriv;
 	struct sta_info *sacrifice = NULL;
 
-	enter_critical_bh(&stapriv->asoc_list_lock);
+	rtw_stapriv_asoc_list_lock(stapriv);
 
 	sacrifice = _rtw_mesh_acnode_prevent_pick_sacrifice(adapter);
 
-	exit_critical_bh(&stapriv->asoc_list_lock);
+	rtw_stapriv_asoc_list_unlock(stapriv);
 
 	return sacrifice;
 }
@@ -780,7 +780,7 @@ void rtw_mesh_peer_status_chk(_adapter *adapter)
 	enter_critical_bh(&(plink_ctl->lock));
 
 	/* check established peers */
-	enter_critical_bh(&stapriv->asoc_list_lock);
+	rtw_stapriv_asoc_list_lock(stapriv);
 
 	head = &stapriv->asoc_list;
 	list = get_next(head);
@@ -843,14 +843,7 @@ void rtw_mesh_peer_status_chk(_adapter *adapter)
 
 flush_add:
 		if (flush) {
-			rtw_list_delete(&sta->asoc_list);
-			stapriv->asoc_list_cnt--;
-#ifdef CONFIG_RTW_TOKEN_BASED_XMIT
-			if (sta->tbtx_enable)
-				stapriv->tbtx_asoc_list_cnt--;
-#endif
-			STA_SET_MESH_PLINK(sta, NULL);
-
+			rtw_stapriv_asoc_list_del(stapriv, sta);
 			stainfo_offset = rtw_stainfo_offset(stapriv, sta);
 			if (stainfo_offset_valid(stainfo_offset))
 				flush_list[flush_num++] = stainfo_offset;
@@ -859,7 +852,7 @@ flush_add:
 		}
 	}
 
-	exit_critical_bh(&stapriv->asoc_list_lock);
+	rtw_stapriv_asoc_list_unlock(stapriv);
 
 	/* check non-established peers */
 	for (i = 0; i < RTW_MESH_MAX_PEER_CANDIDATES; i++) {
@@ -896,7 +889,7 @@ flush_add:
 			sta = rtw_get_stainfo_by_offset(stapriv, flush_list[i]);
 			_rtw_memcpy(sta_addr, sta->cmn.mac_addr, ETH_ALEN);
 
-			updated |= ap_free_sta(adapter, sta, _TRUE, WLAN_REASON_DEAUTH_LEAVING, _FALSE);
+			updated |= ap_free_sta(adapter, sta, _TRUE, 0, WLAN_REASON_DEAUTH_LEAVING, _FALSE);
 			rtw_mesh_expire_peer(adapter, sta_addr);
 		}
 
@@ -1756,26 +1749,18 @@ bypass_sync_bss:
 
 				if (sac) {
 					struct sta_priv *stapriv = &adapter->stapriv;
-					_irqL irqL;
 					u8 sta_addr[ETH_ALEN];
 					u8 updated = _FALSE;
 
-					_enter_critical_bh(&stapriv->asoc_list_lock, &irqL);
-					if (!rtw_is_list_empty(&sac->asoc_list)) {
-						rtw_list_delete(&sac->asoc_list);
-						stapriv->asoc_list_cnt--;
-						#ifdef CONFIG_RTW_TOKEN_BASED_XMIT
-						if (sac->tbtx_enable)
-							stapriv->tbtx_asoc_list_cnt--;
-						#endif			
-						STA_SET_MESH_PLINK(sac, NULL);
-					}
-					_exit_critical_bh(&stapriv->asoc_list_lock, &irqL);
+					rtw_stapriv_asoc_list_lock(stapriv);
+					if (!rtw_is_list_empty(&sac->asoc_list))
+						rtw_stapriv_asoc_list_del(stapriv, sac);
+					rtw_stapriv_asoc_list_unlock(stapriv);
 					RTW_INFO(FUNC_ADPT_FMT" sacrifice "MAC_FMT" for acnode\n"
 						, FUNC_ADPT_ARG(adapter), MAC_ARG(sac->cmn.mac_addr));
 
 					_rtw_memcpy(sta_addr, sac->cmn.mac_addr, ETH_ALEN);
-					updated = ap_free_sta(adapter, sac, 0, 0, 1);
+					updated = ap_free_sta(adapter, sac, 0, 0, 0, 1);
 					rtw_mesh_expire_peer(stapriv->padapter, sta_addr);
 
 					associated_clients_update(adapter, updated, STA_INFO_UPDATE_ALL);
@@ -2477,13 +2462,9 @@ static int rtw_mesh_peer_establish(_adapter *adapter, struct mesh_plink_ent *pli
 	u8 *tlv_ies;
 	u16 tlv_ieslen;
 	struct rtw_ieee802_11_elems elems;
-	_irqL irqL;
 	int i;
 	u16 status = 0;
 	int ret = _FAIL;
-#ifdef CONFIG_RTW_TOKEN_BASED_XMIT
-	u8 sta_tbtx_enable = _FALSE;
-#endif
 
 	if (!plink->rx_conf_ies || !plink->rx_conf_ies_len) {
 		RTW_INFO(FUNC_ADPT_FMT" no rx confirm from sta "MAC_FMT"\n"
@@ -2553,9 +2534,8 @@ static int rtw_mesh_peer_establish(_adapter *adapter, struct mesh_plink_ent *pli
 
 #ifdef CONFIG_RTW_TOKEN_BASED_XMIT
 	if (elems.tbtx_cap && elems.tbtx_cap_len != 0) {
-		if(rtw_is_tbtx_capabilty(elems.tbtx_cap, elems.tbtx_cap_len)) {
-			sta_tbtx_enable = _TRUE;
-		}
+		if(rtw_is_tbtx_capabilty(elems.tbtx_cap, elems.tbtx_cap_len))
+			sta->tbtx_enable = _TRUE;
 	}
 #endif
 
@@ -2583,21 +2563,14 @@ static int rtw_mesh_peer_establish(_adapter *adapter, struct mesh_plink_ent *pli
 	sta->metrics.data_rate = 10;
 	sta->alive = _TRUE;
 
-	_enter_critical_bh(&stapriv->asoc_list_lock, &irqL);
+	rtw_stapriv_asoc_list_lock(stapriv);
 	if (rtw_is_list_empty(&sta->asoc_list)) {
 		STA_SET_MESH_PLINK(sta, plink);
 		/* TBD: up layer timeout mechanism */
 		/* sta->expire_to = mcfg->plink_timeout / 2; */
-		rtw_list_insert_tail(&sta->asoc_list, &stapriv->asoc_list);
-		stapriv->asoc_list_cnt++;
-#ifdef CONFIG_RTW_TOKEN_BASED_XMIT
-		if (sta_tbtx_enable) {
-			sta->tbtx_enable = _TRUE;
-			stapriv->tbtx_asoc_list_cnt++;
-		}
-#endif
+		rtw_stapriv_asoc_list_add(stapriv, sta);
 	}
-	_exit_critical_bh(&stapriv->asoc_list_lock, &irqL);
+	rtw_stapriv_asoc_list_unlock(stapriv);
 
 	bss_cap_update_on_sta_join(adapter, sta);
 	sta_info_update(adapter, sta);
@@ -2617,7 +2590,6 @@ int rtw_mesh_set_plink_state(_adapter *adapter, const u8 *mac, u8 plink_state)
 	_irqL irqL2;
 	struct sta_priv *stapriv = &adapter->stapriv;
 	struct sta_info *sta = NULL;
-	_irqL irqL;
 	struct sta_info *del_sta = NULL;
 	int ret = _SUCCESS;
 
@@ -2640,17 +2612,10 @@ int rtw_mesh_set_plink_state(_adapter *adapter, const u8 *mac, u8 plink_state)
 
 			if (sac) {
 				del_sta = sac;
-				_enter_critical_bh(&stapriv->asoc_list_lock, &irqL);
-				if (!rtw_is_list_empty(&del_sta->asoc_list)) {
-					rtw_list_delete(&del_sta->asoc_list);
-					stapriv->asoc_list_cnt--;
-					#ifdef CONFIG_RTW_TOKEN_BASED_XMIT
-					if (del_sta->tbtx_enable)
-						stapriv->tbtx_asoc_list_cnt--;
-					#endif
-					STA_SET_MESH_PLINK(del_sta, NULL);
-				}
-				_exit_critical_bh(&stapriv->asoc_list_lock, &irqL);
+				rtw_stapriv_asoc_list_lock(stapriv);
+				if (!rtw_is_list_empty(&del_sta->asoc_list))
+					rtw_stapriv_asoc_list_del(stapriv, del_sta);
+				rtw_stapriv_asoc_list_unlock(stapriv);
 				RTW_INFO(FUNC_ADPT_FMT" sacrifice "MAC_FMT" for acnode\n"
 					, FUNC_ADPT_ARG(adapter), MAC_ARG(del_sta->cmn.mac_addr));
 			}
@@ -2681,17 +2646,10 @@ int rtw_mesh_set_plink_state(_adapter *adapter, const u8 *mac, u8 plink_state)
 		if (!del_sta)
 			goto release_plink_ctl;
 
-		_enter_critical_bh(&stapriv->asoc_list_lock, &irqL);
-		if (!rtw_is_list_empty(&del_sta->asoc_list)) {
-			rtw_list_delete(&del_sta->asoc_list);
-			stapriv->asoc_list_cnt--;
-			#ifdef CONFIG_RTW_TOKEN_BASED_XMIT
-			if (del_sta->tbtx_enable)
-				stapriv->tbtx_asoc_list_cnt--;
-			#endif
-			STA_SET_MESH_PLINK(del_sta, NULL);
-		}
-		_exit_critical_bh(&stapriv->asoc_list_lock, &irqL);
+		rtw_stapriv_asoc_list_lock(stapriv);
+		if (!rtw_is_list_empty(&del_sta->asoc_list))
+			rtw_stapriv_asoc_list_del(stapriv, del_sta);
+		rtw_stapriv_asoc_list_unlock(stapriv);
 	}
 
 release_plink_ctl:
@@ -2702,7 +2660,7 @@ release_plink_ctl:
 		u8 updated = _FALSE;
 
 		_rtw_memcpy(sta_addr, del_sta->cmn.mac_addr, ETH_ALEN);
-		updated = ap_free_sta(adapter, del_sta, 0, 0, 1);
+		updated = ap_free_sta(adapter, del_sta, 0, 0, 0, 1);
 		rtw_mesh_expire_peer(stapriv->padapter, sta_addr);
 
 		associated_clients_update(adapter, updated, STA_INFO_UPDATE_ALL);
@@ -2914,7 +2872,6 @@ exit:
 
 u8 rtw_mesh_ps_annc(_adapter *adapter, u8 ps)
 {
-	_irqL irqL;
 	_list *head, *list;
 	struct sta_info *sta;
 	struct sta_priv *stapriv = &adapter->stapriv;
@@ -2925,7 +2882,7 @@ u8 rtw_mesh_ps_annc(_adapter *adapter, u8 ps)
 	if (rtw_linked_check(adapter) == _FALSE)
 		goto exit;
 
-	_enter_critical_bh(&stapriv->asoc_list_lock, &irqL);
+	rtw_stapriv_asoc_list_lock(stapriv);
 
 	head = &stapriv->asoc_list;
 	list = get_next(head);
@@ -2939,14 +2896,14 @@ u8 rtw_mesh_ps_annc(_adapter *adapter, u8 ps)
 		if (stainfo_offset_valid(stainfo_offset))
 			sta_alive_list[sta_alive_num++] = stainfo_offset;
 	}
-	_exit_critical_bh(&stapriv->asoc_list_lock, &irqL);
+	rtw_stapriv_asoc_list_unlock(stapriv);
 
 	for (i = 0; i < sta_alive_num; i++) {
 		sta = rtw_get_stainfo_by_offset(stapriv, sta_alive_list[i]);
 		if (!sta)
 			continue;
 
-		issue_qos_nulldata(adapter, sta->cmn.mac_addr, 7, ps, 3, 500);
+		issue_qos_nulldata(adapter, sta->cmn.mac_addr, 7, ps, 3, PS_ANNC_DRV_RETRY_INT_MS);
 		annc_cnt++;
 	}
 
@@ -3551,7 +3508,6 @@ static bool rtw_mesh_data_bmc_to_uc(_adapter *adapter
 {
 	struct sta_priv *stapriv = &adapter->stapriv;
 	struct xmit_priv *xmitpriv = &adapter->xmitpriv;
-	_irqL irqL;
 	_list *head, *list;
 	struct sta_info *sta;
 	char b2u_sta_id[NUM_STA];
@@ -3559,7 +3515,7 @@ static bool rtw_mesh_data_bmc_to_uc(_adapter *adapter
 	bool bmc_need = _FALSE;
 	int i;
 
-	_enter_critical_bh(&stapriv->asoc_list_lock, &irqL);
+	rtw_stapriv_asoc_list_lock(stapriv);
 	head = &stapriv->asoc_list;
 	list = get_next(head);
 
@@ -3573,7 +3529,7 @@ static bool rtw_mesh_data_bmc_to_uc(_adapter *adapter
 		if (stainfo_offset_valid(stainfo_offset))
 			b2u_sta_id[b2u_sta_num++] = stainfo_offset;
 	}
-	_exit_critical_bh(&stapriv->asoc_list_lock, &irqL);
+	rtw_stapriv_asoc_list_unlock(stapriv);
 
 	if (!b2u_sta_num)
 		goto exit;
