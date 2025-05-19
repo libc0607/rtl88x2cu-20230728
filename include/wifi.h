@@ -1363,4 +1363,7 @@ struct rtw_regulatory {
 #endif
 #endif
 
+#define GET_MULTIPLE_BSSID_IDX_INDEX(_pEleStart) \
+	LE_BITS_TO_1BYTE((_pEleStart) + 2, 0, 8)
+
 #endif /* _WIFI_H_ */

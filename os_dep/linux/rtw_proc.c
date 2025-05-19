@@ -1233,13 +1233,15 @@ static ssize_t proc_set_rx_info_msg(struct file *file, const char __user *buffer
 
 	struct net_device *dev = data;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
-	struct recv_priv *precvpriv = &(padapter->recvpriv);
+	struct recv_priv *precvpriv;
 	char tmp[32] = {0};
 	int phy_info_flag = 0;
 
 	if (!padapter)
 		return -EFAULT;
 
+        precvpriv = &(padapter->recvpriv);
+        
 	if (count < 1) {
 		RTW_INFO("argument size is less than 1\n");
 		return -EFAULT;
@@ -1816,7 +1818,7 @@ ssize_t proc_set_macaddr_acl(struct file *file, const char __user *buffer, size_
 	if (!tmp)
 		return -ENOMEM;
 
-	if (count > sizeof(tmp)) {
+	if (count > (17 * NUM_ACL + 32)) {
 		rtw_warn_on(1);
 		count = -EFAULT;
 		goto exit;
@@ -2398,14 +2400,16 @@ static ssize_t proc_set_udpport(struct file *file, const char __user *buffer, si
 {
 	struct net_device *dev = data;
 	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
-	struct recv_priv *precvpriv = &(padapter->recvpriv);
+	struct recv_priv *precvpriv;
 	int sink_udpport = 0;
 	char tmp[32];
 
 
 	if (!padapter)
 		return -EFAULT;
-
+		
+	precvpriv = &(padapter->recvpriv);
+  
 	if (count < 1) {
 		RTW_INFO("argument size is less than 1\n");
 		return -EFAULT;
@@ -2427,6 +2431,9 @@ static ssize_t proc_set_udpport(struct file *file, const char __user *buffer, si
 
 	}
 	precvpriv->sink_udpport = sink_udpport;
+	precvpriv->pre_rtp_rxseq = 0;
+	precvpriv->cur_rtp_rxseq = 0;
+	precvpriv->rtp_drop_count = 0;
 
 	return count;
 
@@ -2798,7 +2805,7 @@ static void rtw_set_tx_bw_mode(struct _ADAPTER *adapter, u8 bw_mode)
 		for (i = 0; i < MACID_NUM_SW_LIMIT; i++) {
 			sta = macid_ctl->sta[i];
 			if (sta && !is_broadcast_mac_addr(sta->cmn.mac_addr))
-				rtw_dm_ra_mask_wk_cmd(adapter, (u8 *)sta);
+				rtw_dm_ra_mask_wk_cmd(adapter, sta);
 		}
 	}
 }
@@ -3074,7 +3081,7 @@ static int proc_get_tx_power_idx(struct seq_file *m, void *v)
 		RTW_INFO("%s path=%u, rs=%u\n", __func__, path, rs);
 
 	if (path == RF_PATH_A && rs == CCK)
-		dump_tx_power_idx_title(m, adapter, bw, cch, 0);
+		dump_tx_power_idx_title(m, adapter, bw, 0, 0);
 	dump_tx_power_idx_by_path_rs(m, adapter, path, rs, bw, cch, 0);
 
 	return 0;
@@ -3153,7 +3160,7 @@ static int proc_get_txpwr_total_dbm(struct seq_file *m, void *v)
 	u8 cch = hal_data->current_channel;
 
 	if (rs == CCK)
-		dump_txpwr_total_dbm_title(m, adapter, bw, cch, 0);
+		dump_txpwr_total_dbm_title(m, adapter, bw, 0, 0);
 	dump_txpwr_total_dbm_by_rs(m, adapter, rs, bw, cch, 0);
 
 	return 0;
@@ -6070,6 +6077,13 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("wow_keep_alive_info", proc_dump_wow_keep_alive_info, NULL),
 #endif /*CONFIG_WOW_KEEP_ALIVE_PATTERN*/
 
+#ifdef CONFIG_MDNS_OFFLOAD
+	RTW_PROC_HDL_SSEQ("wow_mdns_resp", proc_get_wow_mdns_resp, proc_set_wow_mdns_resp),
+	RTW_PROC_HDL_SSEQ("wow_mdns_match_criteria", proc_get_wow_mdns_match_criteria, proc_set_wow_mdns_match_criteria),
+	RTW_PROC_HDL_SSEQ("wow_mdns_passthru_list", proc_get_wow_mdns_passthru_list, proc_set_wow_mdns_passthru_list),
+	RTW_PROC_HDL_SSEQ("wow_mdns_offload_state", proc_get_wow_mdns_offload_state, proc_set_wow_mdns_offload_state),
+	RTW_PROC_HDL_SSEQ("wow_mdns_passthru_behavior", proc_get_wow_mdns_passthru_behavior, proc_set_wow_mdns_passthru_behavior),
+#endif
 #endif
 
 #ifdef CONFIG_GPIO_WAKEUP

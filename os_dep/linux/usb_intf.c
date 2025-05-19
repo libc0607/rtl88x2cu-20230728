@@ -595,6 +595,11 @@ static struct dvobj_priv *usb_dvobj_init(struct usb_interface *usb_intf, const s
 	piface_desc = &phost_iface->desc;
 
 	pdvobjpriv->nr_endpoint = piface_desc->bNumEndpoints;
+	if (pdvobjpriv->nr_endpoint > MAX_ENDPOINT_NUM) {
+		RTW_ERR("USB EP_Number : %d > RT DEF-MAX_EP_NUM :%d\n",
+			pdvobjpriv->nr_endpoint, MAX_ENDPOINT_NUM);
+		goto free_dvobj;
+	}
 
 	/* RTW_INFO("\ndump usb_endpoint_descriptor:\n"); */
 
@@ -614,14 +619,29 @@ static struct dvobj_priv *usb_dvobj_init(struct usb_interface *usb_intf, const s
 			/* RTW_INFO("bSynchAddress=%x\n",pendp_desc->bSynchAddress); */
 
 			if (RT_usb_endpoint_is_bulk_in(pendp_desc)) {
+			        if (pdvobjpriv->RtNumInPipes == MAX_BULKIN_NUM) {
+			  		RTW_ERR("USB IN EP_Number exceeds RT DEF-MAX_IN_EP_NUM :%d\n",
+						MAX_BULKIN_NUM);
+					goto free_dvobj;
+				}
 				RTW_INFO("RT_usb_endpoint_is_bulk_in = %x\n", RT_usb_endpoint_num(pendp_desc));
 				pdvobjpriv->RtInPipe[pdvobjpriv->RtNumInPipes] = RT_usb_endpoint_num(pendp_desc);
 				pdvobjpriv->RtNumInPipes++;
 			} else if (RT_usb_endpoint_is_int_in(pendp_desc)) {
+			        if (pdvobjpriv->RtNumInPipes == MAX_BULKIN_NUM) {
+					RTW_ERR("USB IN EP_Number exceeds RT DEF-MAX_IN_EP_NUM :%d\n",
+						MAX_BULKIN_NUM);
+					goto free_dvobj;
+				}
 				RTW_INFO("RT_usb_endpoint_is_int_in = %x, Interval = %x\n", RT_usb_endpoint_num(pendp_desc), pendp_desc->bInterval);
 				pdvobjpriv->RtInPipe[pdvobjpriv->RtNumInPipes] = RT_usb_endpoint_num(pendp_desc);
 				pdvobjpriv->RtNumInPipes++;
 			} else if (RT_usb_endpoint_is_bulk_out(pendp_desc)) {
+			        if (pdvobjpriv->RtNumOutPipes == MAX_BULKOUT_NUM) {
+					RTW_ERR("USB OUT EP_Number exceeds RT DEF-MAX_OUT_EP_NUM :%d\n",
+						MAX_BULKOUT_NUM);
+					goto free_dvobj;
+				}
 				RTW_INFO("RT_usb_endpoint_is_bulk_out = %x\n", RT_usb_endpoint_num(pendp_desc));
 				pdvobjpriv->RtOutPipe[pdvobjpriv->RtNumOutPipes] = RT_usb_endpoint_num(pendp_desc);
 				pdvobjpriv->RtNumOutPipes++;
@@ -1328,6 +1348,12 @@ static int rtw_drv_init(struct usb_interface *pusb_intf, const struct usb_device
 			goto free_if_vir;
 		}
 	}
+#endif
+
+#ifdef CONFIG_HAL_PREINIT
+	if (rtw_hal_init(padapter) == _FAIL)
+		goto free_if_vir;
+	rtw_set_hal_pre_inited(padapter, _TRUE);
 #endif
 
 #ifdef CONFIG_GLOBAL_UI_PID

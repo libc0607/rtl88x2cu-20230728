@@ -884,6 +884,7 @@ static void rtl8822cu_xmit_tasklet(unsigned long priv)
 	int ret = _FALSE;
 	_adapter *padapter = (_adapter *)priv;
 	struct xmit_priv *pxmitpriv = &padapter->xmitpriv;
+	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
 
 	while (1) {
 		if (RTW_CANNOT_TX(padapter)) {
@@ -893,6 +894,13 @@ static void rtl8822cu_xmit_tasklet(unsigned long priv)
 
 		if (rtw_xmit_ac_blocked(padapter) == _TRUE)
 			break;
+			
+		if (pwrpriv->bInSuspend == _TRUE) {
+		#ifdef DBG_TX_DROP_FRAME
+			RTW_INFO("DBG_TX_DROP_FRAME %s in suspend flow\n", __FUNCTION__);
+		#endif
+			break;
+		}
 
 		ret = rtl8822cu_xmitframe_complete(padapter, pxmitpriv, NULL);
 

@@ -54,10 +54,12 @@
 
 #endif
 
+#if 0
 #if defined(CONFIG_MCC_MODE) && defined(CONFIG_BT_COEXIST)
 
 	#error "Disable BT COEXIST before enable MCC MODE\n"
 
+#endif
 #endif
 
 #if defined(CONFIG_MCC_MODE) && defined(CONFIG_TDLS)
@@ -265,6 +267,10 @@
 #ifdef CONFIG_AP_MODE
 	#define CONFIG_LIMITED_AP_NUM 1
 
+	#ifndef CONFIG_RTW_MAX_AP_ASSOC_STA
+	#define CONFIG_RTW_MAX_AP_ASSOC_STA 0 /* 0: not specified */
+	#endif
+
 	#ifndef CONFIG_RTW_AP_DATA_BMC_TO_UC
 	#define CONFIG_RTW_AP_DATA_BMC_TO_UC 1
 	#endif
@@ -374,6 +380,10 @@
 
 #ifndef CONFIG_RTW_HIQ_FILTER
 	#define CONFIG_RTW_HIQ_FILTER 1
+#endif
+
+#ifndef CONFIG_RTW_EDCCA_MODE_SEL
+#define CONFIG_RTW_EDCCA_MODE_SEL 0 /* 0:RTW_EDCCA_NORM, 0xFF:RTW_EDCCA_AUTO */
 #endif
 
 #ifndef CONFIG_RTW_ADAPTIVITY_EN

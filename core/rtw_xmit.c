@@ -1476,7 +1476,7 @@ static u8 tos_to_up(u8 tos)
 	return up;
 }
 
-static void set_qos(_pkt *pkt, struct pkt_attrib *pattrib)
+static void set_qos(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattrib)
 {
 	s32 UserPriority = 0;
 
@@ -1511,6 +1511,21 @@ static void set_qos(_pkt *pkt, struct pkt_attrib *pattrib)
 	if (pattrib->ether_type == ETH_P_ARP)
 		UserPriority = 7;
 	#endif/*CONFIG_IP_R_MONITOR*/
+
+#ifdef CONFIG_MCC_MODE
+	if (MCC_EN(padapter)) {
+		/* Under MCC */
+		if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_NEED_MCC)) {
+			if (padapter->mcc_adapterpriv.role == MCC_ROLE_GO
+				|| padapter->mcc_adapterpriv.role == MCC_ROLE_GC
+				|| padapter->mcc_adapterpriv.role == MCC_ROLE_AP) {
+				UserPriority = 7;
+			} else {
+				UserPriority = 0;
+			}
+		}
+	}
+#endif /* CONFIG_MCC_MODE */
 
 null_pkt:
 	pattrib->priority = UserPriority;
@@ -1874,7 +1889,7 @@ get_sta_info:
 		| WIFI_ADHOC_STATE | WIFI_ADHOC_MASTER_STATE)
 	) {
 		if (pattrib->qos_en) {
-			set_qos(pkt, pattrib);
+			set_qos(padapter, pkt, pattrib);
 			#ifdef CONFIG_RTW_MESH
 			if (MLME_IS_MESH(padapter))
 				rtw_mesh_tx_set_whdr_mctrl_len(pattrib->mesh_frame_mode, pattrib);
@@ -1884,12 +1899,12 @@ get_sta_info:
 #ifdef CONFIG_TDLS
 		if (pattrib->direct_link == _TRUE) {
 			if (pattrib->qos_en)
-				set_qos(pkt, pattrib);
+				set_qos(padapter, pkt, pattrib);
 		} else
 #endif
 		{
 			if (pqospriv->qos_option) {
-				set_qos(pkt, pattrib);
+				set_qos(padapter, pkt, pattrib);
 
 				if (pmlmepriv->acm_mask != 0)
 					pattrib->priority = qos_acm(pmlmepriv->acm_mask, pattrib->priority);
@@ -4197,35 +4212,10 @@ static struct xmit_frame *dequeue_one_xmitframe(struct xmit_priv *pxmitpriv, str
 	xmitframe_phead = get_list_head(pframe_queue);
 	xmitframe_plist = get_next(xmitframe_phead);
 
-	while ((rtw_end_of_queue_search(xmitframe_phead, xmitframe_plist)) == _FALSE) {
+	if ((rtw_end_of_queue_search(xmitframe_phead, xmitframe_plist)) == _FALSE) {
 		pxmitframe = LIST_CONTAINOR(xmitframe_plist, struct xmit_frame, list);
-
-		/* xmitframe_plist = get_next(xmitframe_plist); */
-
-		/*#ifdef RTK_DMP_PLATFORM
-		#ifdef CONFIG_USB_TX_AGGREGATION
-				if((ptxservq->qcnt>0) && (ptxservq->qcnt<=2))
-				{
-					pxmitframe = NULL;
-
-					tasklet_schedule(&pxmitpriv->xmit_tasklet);
-
-					break;
-				}
-		#endif
-		#endif*/
 		rtw_list_delete(&pxmitframe->list);
-
 		ptxservq->qcnt--;
-
-		/* rtw_list_insert_tail(&pxmitframe->list, &phwxmit->pending); */
-
-		/* ptxservq->qcnt--; */
-
-		break;
-
-		/* pxmitframe = NULL; */
-
 	}
 
 	return pxmitframe;
@@ -4239,10 +4229,8 @@ static struct xmit_frame *get_one_xmitframe(struct xmit_priv *pxmitpriv, struct 
 	xmitframe_phead = get_list_head(pframe_queue);
 	xmitframe_plist = get_next(xmitframe_phead);
 
-	while ((rtw_end_of_queue_search(xmitframe_phead, xmitframe_plist)) == _FALSE) {
+	if ((rtw_end_of_queue_search(xmitframe_phead, xmitframe_plist)) == _FALSE)
 		pxmitframe = LIST_CONTAINOR(xmitframe_plist, struct xmit_frame, list);
-		break;
-	}
 
 	return pxmitframe;
 }
@@ -4832,27 +4820,7 @@ static void do_queue_select(_adapter	*padapter, struct pkt_attrib *pattrib)
 
 	qsel = pattrib->priority;
 
-#ifdef CONFIG_MCC_MODE
-	if (MCC_EN(padapter)) {
-		/* Under MCC */
-		if (rtw_hal_check_mcc_status(padapter, MCC_STATUS_NEED_MCC)) {
-			if (padapter->mcc_adapterpriv.role == MCC_ROLE_GO
-			    || padapter->mcc_adapterpriv.role == MCC_ROLE_AP) {
-				pattrib->qsel = QSLT_VO; /* AP interface VO queue */
-				pattrib->priority  = QSLT_VO;
-			} else {
-				pattrib->qsel = QSLT_BE; /* STA interface BE queue */
-				pattrib->priority  = QSLT_BE;
-			}
-		} else
-			/* Not Under MCC */
-			pattrib->qsel = qsel;
-	} else
-		/* Not enable MCC */
-		pattrib->qsel = qsel;
-#else /* !CONFIG_MCC_MODE */
 	pattrib->qsel = qsel;
-#endif /* CONFIG_MCC_MODE */
 
 	/* high priority packet */
 	if (pattrib->hipriority_pkt) {

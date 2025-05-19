@@ -2340,7 +2340,7 @@ phy_set_tx_power_index_by_rate_section(
 		goto exit;
 	}
 
-	if (rs == CCK && bw != BAND_ON_2_4G)
+	if (rs == CCK && band != BAND_ON_2_4G)
 		goto exit;
 
 	for (i = 0; i < rates_by_sections[rs].rate_num; ++i) {
@@ -2440,18 +2440,26 @@ exit:
 }
 
 #ifdef CONFIG_TXPWR_PG_WITH_PWR_IDX
-u8 phy_get_pg_txpwr_idx(_adapter *pAdapter
+static u8 phy_get_pg_txpwr_idx(_adapter *pAdapter
 	, enum rf_path RFPath, RATE_SECTION rs, u8 ntx_idx
-	, enum channel_width BandWidth, u8 band, u8 Channel)
+	, enum channel_width BandWidth, u8 band, u8 Channel, u8 opch)
 {
-	PHAL_DATA_TYPE		pHalData = GET_HAL_DATA(pAdapter);
-	u8					i;
-	u8					txPower = 0;
-	u8					chnlIdx = (Channel - 1);
+	PHAL_DATA_TYPE pHalData = GET_HAL_DATA(pAdapter);
+	u8 i;
+	u8 txPower = 0;
+	u8 chnlIdx;
 
 	if (HAL_IsLegalChannel(pAdapter, Channel) == _FALSE) {
 		chnlIdx = 0;
-		RTW_INFO("Illegal channel!!\n");
+		RTW_WARN("Illegal channel!!\n");
+	} else {
+		if (IS_CCK_RATE_SECTION(rs) || IS_OFDM_RATE_SECTION(rs)) {
+			if (opch) {
+				while (BandWidth > CHANNEL_WIDTH_20)
+					Channel = rtw_get_scch_by_cch_opch(Channel, BandWidth--, opch);
+			} else
+				Channel = pHalData->cch_20;
+		}
 	}
 
 	phy_get_ch_idx(Channel, &chnlIdx);
@@ -4075,13 +4083,21 @@ void dump_tx_power_idx_title(void *sel, _adapter *adapter, enum channel_width bw
 {
 	u8 cch_20, cch_40, cch_80;
 
-	cch_80 = bw == CHANNEL_WIDTH_80 ? cch : 0;
-	cch_40 = bw == CHANNEL_WIDTH_40 ? cch : 0;
-	cch_20 = bw == CHANNEL_WIDTH_20 ? cch : 0;
-	if (cch_80 != 0)
-		cch_40 = rtw_get_scch_by_cch_opch(cch_80, CHANNEL_WIDTH_80, opch);
-	if (cch_40 != 0)
-		cch_20 = rtw_get_scch_by_cch_opch(cch_40, CHANNEL_WIDTH_40, opch);
+	if (opch) {
+		cch_80 = bw == CHANNEL_WIDTH_80 ? cch : 0;
+		cch_40 = bw == CHANNEL_WIDTH_40 ? cch : 0;
+		cch_20 = bw == CHANNEL_WIDTH_20 ? cch : 0;
+		if (cch_80 != 0)
+			cch_40 = rtw_get_scch_by_cch_opch(cch_80, CHANNEL_WIDTH_80, opch);
+		if (cch_40 != 0)
+			cch_20 = rtw_get_scch_by_cch_opch(cch_40, CHANNEL_WIDTH_40, opch);
+	} else {
+		HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
+
+		cch_20 = hal_data->cch_20;
+		cch_40 = hal_data->cch_40;
+		cch_80 = hal_data->cch_80;
+	}
 
 	RTW_PRINT_SEL(sel, "%s", ch_width_str(bw));
 	if (bw >= CHANNEL_WIDTH_80)
@@ -4206,13 +4222,21 @@ void dump_txpwr_total_dbm_title(void *sel, _adapter *adapter, enum channel_width
 	txpwr_mbm_get_dbm_str(rfctl->antenna_gain, 0, antenna_gain_str, 8);
 	RTW_PRINT_SEL(sel, "antenna_gain:%s\n", antenna_gain_str);
 
-	cch_80 = bw == CHANNEL_WIDTH_80 ? cch : 0;
-	cch_40 = bw == CHANNEL_WIDTH_40 ? cch : 0;
-	cch_20 = bw == CHANNEL_WIDTH_20 ? cch : 0;
-	if (cch_80 != 0)
-		cch_40 = rtw_get_scch_by_cch_opch(cch_80, CHANNEL_WIDTH_80, opch);
-	if (cch_40 != 0)
-		cch_20 = rtw_get_scch_by_cch_opch(cch_40, CHANNEL_WIDTH_40, opch);
+	if (opch) {
+		cch_80 = bw == CHANNEL_WIDTH_80 ? cch : 0;
+		cch_40 = bw == CHANNEL_WIDTH_40 ? cch : 0;
+		cch_20 = bw == CHANNEL_WIDTH_20 ? cch : 0;
+		if (cch_80 != 0)
+			cch_40 = rtw_get_scch_by_cch_opch(cch_80, CHANNEL_WIDTH_80, opch);
+		if (cch_40 != 0)
+			cch_20 = rtw_get_scch_by_cch_opch(cch_40, CHANNEL_WIDTH_40, opch);
+	} else {
+		HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
+
+		cch_20 = hal_data->cch_20;
+		cch_40 = hal_data->cch_40;
+		cch_80 = hal_data->cch_80;
+	}
 
 	RTW_PRINT_SEL(sel, "%s", ch_width_str(bw));
 	if (bw >= CHANNEL_WIDTH_80)
@@ -5968,6 +5992,7 @@ inline void phy_free_filebuf(_adapter *padapter)
 */
 s8 phy_get_txpwr_regd_lmt(_adapter *adapter, struct hal_spec_t *hal_spec, u8 cch, enum channel_width bw, u8 ntx_idx)
 {
+#if CONFIG_TXPWR_LIMIT
 	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(adapter);
 	s16 total_mbm = UNSPECIFIED_MBM;
@@ -5989,6 +6014,9 @@ exit:
 		lmt = hal_spec->txgi_max;
 
 	return lmt;
+#else
+	return hal_spec->txgi_max;
+#endif
 }
 
 /*
@@ -6261,7 +6289,7 @@ u8 hal_com_get_txpwr_idx(_adapter *adapter, enum rf_path rfpath
 		*/
 		u8 rs_target;
 
-		base = phy_get_pg_txpwr_idx(adapter, rfpath, rs, ntx_idx, bw, band, cch);
+		base = phy_get_pg_txpwr_idx(adapter, rfpath, rs, ntx_idx, bw, band, cch, opch);
 		rs_target = phy_get_target_txpwr(adapter, band, rfpath, rs);
 		power_idx = base + (rate_target - rs_target) + (rate_amends);
 
