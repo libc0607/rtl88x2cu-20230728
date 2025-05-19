@@ -1,9 +1,13 @@
-# rtl88x2cu-20230728
-RTL8812CU/RTL8822CU Linux Driver v5.15.8-52-20230728 FPV Mod  
+# rtl88x2cu
+RTL8812CU/RTL8822CU Linux Driver v5.15.8.5-3 20240412 FPV Mod  
 Download CC's pre-built OpenIPC firmware with this driver integrated [here](https://github.com/zhouruixi/OpenIPC-firmware).  
 
 ## Resources
-Original driver from Realtek: [RTL8822CU_WiFi_linux_v5.15.8-52-g35e62e7c9_COEX20221215-3130.20230728.tar.gz](https://github.com/libc0607/rtl88x2cu-20230728/blob/main/doc/RTL8822CU_WiFi_linux_v5.15.8-52-g35e62e7c9_COEX20221215-3130.20230728.tar.gz)   
+Original driver from Realtek:  
+[rtl88x2CU_WiFi_linux_v5.15.8-52-g35e62e7c9.20230728_COEX20221215-3130.tar.gz](https://github.com/user-attachments/files/20281949/rtl88x2CU_WiFi_linux_v5.15.8-52-g35e62e7c9.20230728_COEX20221215-3130.tar.gz)  
+[rtl88x2CU_WiFi_linux_v5.15.8.5-3-g88098843f.20240412_COEX20221215-3130.tar.gz](https://github.com/user-attachments/files/20281946/rtl88x2CU_WiFi_linux_v5.15.8.5-3-g88098843f.20240412_COEX20221215-3130.tar.gz) (latest)  
+Changelog (from Realtek): [ReleaseNotes.pdf](https://github.com/user-attachments/files/20281972/ReleaseNotes.pdf)  
+
 
 BL-M8812CU3 datasheet: [BL-M8812CU3_datasheet_V1.0.1.1.pdf](https://github.com/libc0607/rtl88x2cu-20230728/blob/main/doc/BL-M8812CU3_datasheet_V1.0.1.1.pdf)  
 
