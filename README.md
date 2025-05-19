@@ -8,8 +8,8 @@ Original driver from Realtek:
 [rtl88x2CU_WiFi_linux_v5.15.8.5-3-g88098843f.20240412_COEX20221215-3130.tar.gz](https://github.com/user-attachments/files/20281946/rtl88x2CU_WiFi_linux_v5.15.8.5-3-g88098843f.20240412_COEX20221215-3130.tar.gz) (latest)  
 Changelog (from Realtek): [ReleaseNotes.pdf](https://github.com/user-attachments/files/20281972/ReleaseNotes.pdf)  
 
+BL-M8812CU3 datasheet: [BL-M8812CU3_datasheet_V1.0.1.1.pdf](https://github.com/user-attachments/files/20282045/BL-M8812CU3_datasheet_V1.0.1.1.pdf)  
 
-BL-M8812CU3 datasheet: [BL-M8812CU3_datasheet_V1.0.1.1.pdf](https://github.com/libc0607/rtl88x2cu-20230728/blob/main/doc/BL-M8812CU3_datasheet_V1.0.1.1.pdf)  
 
 Schematic & PCB design (using the chip, not module): [libc0607/rtl88x2cu_rfpa5542_20mm_demo_v1p0](https://oshwhub.com/libc0607/rtl88x2cu_rfpa5542_20mm_demo_v1p0)  
 
