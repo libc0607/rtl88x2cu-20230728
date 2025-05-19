@@ -479,6 +479,7 @@ const char *const _rtw_edcca_mode_str[] = {
 	[RTW_EDCCA_NORM]	= "NORMAL",
 	[RTW_EDCCA_CS]		= "CS",
 	[RTW_EDCCA_ADAPT]	= "ADAPT",
+	[RTW_EDCCA_CBP]		= "CBP",
 };
 
 const char *const _rtw_dfs_regd_str[] = {
@@ -528,12 +529,22 @@ const REGULATION_TXPWR_LMT _txpwr_lmt_alternate[] = {
 	[TXPWR_LMT_UK]		= TXPWR_LMT_ETSI,
 };
 
-const enum rtw_edcca_mode _rtw_regd_to_edcca_mode[RTW_REGD_NUM] = {
-	[RTW_REGD_NA] = RTW_EDCCA_MODE_NUM,
-	[RTW_REGD_MKK] = RTW_EDCCA_CS,
-	[RTW_REGD_ETSI] = RTW_EDCCA_ADAPT,
-	[RTW_REGD_WW] = RTW_EDCCA_ADAPT,
+const enum rtw_edcca_mode_t _rtw_regd_to_edcca_mode[RTW_REGD_NUM] = {
+	[RTW_REGD_NA]	= RTW_EDCCA_MODE_NUM,
+	[RTW_REGD_MKK]	= RTW_EDCCA_CS,
+	[RTW_REGD_ETSI]	= RTW_EDCCA_ADAPT,
+	[RTW_REGD_WW]	= RTW_EDCCA_ADAPT,
 };
+
+#if CONFIG_IEEE80211_BAND_6GHZ
+const enum rtw_edcca_mode_t _rtw_regd_to_edcca_mode_6g[RTW_REGD_NUM] = {
+	[RTW_REGD_NA]	= RTW_EDCCA_MODE_NUM,
+	[RTW_REGD_FCC]	= RTW_EDCCA_CBP,
+	[RTW_REGD_MKK]	= RTW_EDCCA_CS,
+	[RTW_REGD_ETSI]	= RTW_EDCCA_ADAPT,
+	[RTW_REGD_WW]	= RTW_EDCCA_CBP,
+};
+#endif
 
 const REGULATION_TXPWR_LMT _rtw_regd_to_txpwr_lmt[] = {
 	[RTW_REGD_NA]		= TXPWR_LMT_NUM,
@@ -608,7 +619,7 @@ exit:
 	return buf;
 }
 
-static enum rtw_edcca_mode rtw_edcca_mode_get_strictest(enum rtw_edcca_mode a, enum rtw_edcca_mode b)
+static enum rtw_edcca_mode_t rtw_edcca_mode_get_strictest(enum rtw_edcca_mode_t a, enum rtw_edcca_mode_t b)
 {
 	if (a >= RTW_EDCCA_MODE_NUM)
 		return b < RTW_EDCCA_MODE_NUM ? b : RTW_EDCCA_MODE_NUM;
@@ -654,7 +665,7 @@ static void rtw_edcca_mode_update_by_regd_reqs(struct dvobj_priv *dvobj, bool re
 
 		#if CONFIG_IEEE80211_BAND_6GHZ
 		tmp_mode = chplan->edcca_mode_6g_override != RTW_EDCCA_DEF ? chplan->edcca_mode_6g_override :
-			rtw_regd_to_edcca_mode(rtw_chplan_get_default_regd_6g(chplan->domain_code_6g));
+			rtw_regd_to_edcca_mode_6g(rtw_chplan_get_default_regd_6g(chplan->domain_code_6g));
 		mode[BAND_ON_6G] = rtw_edcca_mode_get_strictest(mode[BAND_ON_6G], tmp_mode);
 		#endif
 	}
@@ -680,7 +691,7 @@ void rtw_edcca_mode_update(struct dvobj_priv *dvobj, bool req_lock)
 	struct registry_priv *regsty = dvobj_to_regsty(dvobj);
 	struct rf_ctl_t *rfctl = dvobj_to_rfctl(dvobj);
 
-	if (regsty->adaptivity_en == 0) {
+	if (regsty->edcca_mode_sel == RTW_EDCCA_NORM) {
 		/* force disable */
 		rfctl->edcca_mode_2g = RTW_EDCCA_NORM;
 		#if CONFIG_IEEE80211_BAND_5GHZ
@@ -690,27 +701,35 @@ void rtw_edcca_mode_update(struct dvobj_priv *dvobj, bool req_lock)
 		rfctl->edcca_mode_6g = RTW_EDCCA_NORM;
 		#endif
 
-	} else if (regsty->adaptivity_en == 1) {
-		/* force enable */
-		if (!regsty->adaptivity_mode) {
-			/* adaptivity */
-			rfctl->edcca_mode_2g = RTW_EDCCA_ADAPT;
-			#if CONFIG_IEEE80211_BAND_5GHZ
-			rfctl->edcca_mode_5g = RTW_EDCCA_ADAPT;
-			#endif
-			#if CONFIG_IEEE80211_BAND_6GHZ
-			rfctl->edcca_mode_6g = RTW_EDCCA_ADAPT;
-			#endif
-		} else {
-			/* carrier sense */
-			rfctl->edcca_mode_2g = RTW_EDCCA_CS;
-			#if CONFIG_IEEE80211_BAND_5GHZ
-			rfctl->edcca_mode_5g = RTW_EDCCA_CS;
-			#endif
-			#if CONFIG_IEEE80211_BAND_6GHZ
-			rfctl->edcca_mode_6g = RTW_EDCCA_CS;
-			#endif
-		}
+	} else if (regsty->edcca_mode_sel == RTW_EDCCA_CS) {
+		/* carrier sense */
+		rfctl->edcca_mode_2g = RTW_EDCCA_CS;
+		#if CONFIG_IEEE80211_BAND_5GHZ
+		rfctl->edcca_mode_5g = RTW_EDCCA_CS;
+		#endif
+		#if CONFIG_IEEE80211_BAND_6GHZ
+		rfctl->edcca_mode_6g = RTW_EDCCA_CS;
+		#endif
+
+	} else if (regsty->edcca_mode_sel == RTW_EDCCA_ADAPT) {
+		/* adaptivity */
+		rfctl->edcca_mode_2g = RTW_EDCCA_ADAPT;
+		#if CONFIG_IEEE80211_BAND_5GHZ
+		rfctl->edcca_mode_5g = RTW_EDCCA_ADAPT;
+		#endif
+		#if CONFIG_IEEE80211_BAND_6GHZ
+		rfctl->edcca_mode_6g = RTW_EDCCA_ADAPT;
+		#endif
+
+	} else if (regsty->edcca_mode_sel == RTW_EDCCA_CBP) {
+		/* adaptivity */
+		rfctl->edcca_mode_2g = RTW_EDCCA_NORM;
+		#if CONFIG_IEEE80211_BAND_5GHZ
+		rfctl->edcca_mode_5g = RTW_EDCCA_NORM;
+		#endif
+		#if CONFIG_IEEE80211_BAND_6GHZ
+		rfctl->edcca_mode_6g = RTW_EDCCA_CBP;
+		#endif
 
 	} else {
 		/* by regulatory setting */
@@ -1188,7 +1207,7 @@ static void rtw_country_chplan_get_edcca_mode_of_bands(const struct country_chpl
 	#if CONFIG_IEEE80211_BAND_6GHZ
 	mode_of_band[BAND_ON_6G] =
 		ent->edcca_mode_6g_override != RTW_EDCCA_DEF ? ent->edcca_mode_6g_override :
-		rtw_regd_to_edcca_mode(rtw_chplan_get_default_regd_6g(ent->domain_code_6g));
+		rtw_regd_to_edcca_mode_6g(rtw_chplan_get_default_regd_6g(ent->domain_code_6g));
 	#endif
 }
 

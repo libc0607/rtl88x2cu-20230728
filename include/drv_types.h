@@ -108,6 +108,7 @@ typedef struct _ADAPTER _adapter, ADAPTER, *PADAPTER;
 #include <rtw_ioctl.h>
 #include <rtw_ioctl_set.h>
 #include <rtw_ioctl_query.h>
+#include "rtw_cfg.h"
 #include <osdep_intf.h>
 #include <rtw_eeprom.h>
 #include <sta_info.h>
@@ -268,6 +269,7 @@ struct registry_priv {
 
 	u8 tx_bw_mode;
 #ifdef CONFIG_AP_MODE
+        u8 max_ap_assoc_sta;
 	u8 bmc_tx_rate;
 	#if CONFIG_RTW_AP_DATA_BMC_TO_UC
 	u8 ap_src_b2u_flags;
@@ -453,8 +455,7 @@ struct registry_priv {
 	u8 qos_opt_enable;
 
 	u8 hiq_filter;
-	u8 adaptivity_en;
-	u8 adaptivity_mode;
+	u8 edcca_mode_sel;
 	s8 adaptivity_th_l2h_ini;
 	s8 adaptivity_th_edcca_hl_diff;
 	
@@ -1222,6 +1223,7 @@ struct wow_ctl_t {
 #define WOW_CAP_CSA BIT2
 #define WOW_CAP_WPA3_SAE BIT3
 #define WOW_CAP_DIS_INBAND_SIGNAL BIT4
+#define WOW_CAP_MDNS BIT5
 
 #define RFCTL_REG_WORLDWIDE(rfctl)	(IS_ALPHA2_WORLDWIDE(rfctl->alpha2))
 #define RFCTL_REG_ALPHA2_UNSPEC(rfctl)	(IS_ALPHA2_UNSPEC(rfctl->alpha2)) /* ex: only domain code is specified */
@@ -1334,22 +1336,11 @@ struct protsel {
 	u32 sel;		/* save the last sel port */
 };
 
-#ifdef CONFIG_RTL8814B
+#ifdef CONFIG_USB_HCI
+#define MAX_ENDPOINT_NUM 9 /* 2 x Bulk-IN + 7 x Bulk-OUT */
+#endif
 #define MAX_BULKOUT_NUM 7
-#ifdef CONFIG_USB_HCI
-#define MAX_ENDPOINT_NUM 8
-#endif
-#elif defined(CONFIG_RTL8192F)
-#define MAX_BULKOUT_NUM 6
-#ifdef CONFIG_USB_HCI
-#define MAX_ENDPOINT_NUM 8
-#endif
-#else
-#define MAX_BULKOUT_NUM 4
-#ifdef CONFIG_USB_HCI
-#define MAX_ENDPOINT_NUM 6
-#endif
-#endif
+#define MAX_BULKIN_NUM 2
 
 struct dvobj_priv {
 	/*-------- below is common data --------*/
@@ -1403,6 +1394,10 @@ struct dvobj_priv {
 	u8 iface_nums; /* total number of ifaces used runtime */
 	struct mi_state iface_state;
 
+#ifdef CONFIG_HAL_PREINIT
+	u8 hal_pre_inited;
+#endif
+
 #ifdef CONFIG_AP_MODE
 	#ifdef CONFIG_SUPPORT_MULTI_BCN
 	u8		nr_ap_if; /* total interface number of ap /go /mesh / nan mode. */
@@ -1447,7 +1442,7 @@ struct dvobj_priv {
 #endif
 
 	/* In /Out Pipe information */
-	int	RtInPipe[2];
+	int	RtInPipe[MAX_BULKIN_NUM];
 	int	RtOutPipe[MAX_BULKOUT_NUM];
 	u8	Queue2Pipe[HW_QUEUE_ENTRY];/* for out pipe mapping */
 
@@ -2202,6 +2197,16 @@ int rtw_suspend_free_assoc_resource(_adapter *padapter);
 #ifdef CONFIG_WOWLAN
 	int rtw_suspend_wow(_adapter *padapter);
 	int rtw_resume_process_wow(_adapter *padapter);
+#ifdef CONFIG_MDNS_OFFLOAD
+int rtw_wow_add_mdns_resp(_adapter *padapter, u8 index, u8 *resp_content, u16 content_len);
+int rtw_wow_del_mdns_resp(_adapter *padapter, u8 index);
+int rtw_wow_get_mdns_resp_ent(_adapter *padapter, u8 index, struct rtw_mdns_resp_entry **resp_entry);
+int rtw_wow_add_mdns_match_crit(_adapter *padapter, u8 index, u16 match_type, u16 name_offset, u16 name_len);
+int rtw_wow_del_mdns_match_crit(_adapter *padapter, u8 index);
+int rtw_wow_add_mdns_passthru_name(_adapter *padapter, u8 *name, u8 name_len);
+void rtw_wow_clr_mdns_passthru_name(_adapter *padapter);
+void rtw_wow_get_mdns_passthru_list(_adapter *padapter, struct rtw_mdns_passthru_list **passthru_list);
+#endif
 #endif
 
 /* HCI Related header file */

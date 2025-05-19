@@ -711,6 +711,7 @@ int rtw_get_bcn_keys(_adapter *adapter, u8 *whdr, u32 flen, struct beacon_keys *
 int rtw_get_bcn_keys_from_bss(WLAN_BSSID_EX *bss, struct beacon_keys *bcn_keys);
 int rtw_update_bcn_keys_of_network(struct wlan_network *network);
 
+int check_ielen(u8 *start, uint len);
 int validate_bcn_and_probe_rsp_len(u8 *pframe, uint len);
 void rtw_dump_bcn_keys(void *sel, struct beacon_keys *recv_beacon);
 void rtw_bcn_key_err_fix(struct beacon_keys *cur, struct beacon_keys *recv);
@@ -725,6 +726,7 @@ void update_wireless_mode(_adapter *padapter);
 void update_tx_basic_rate(_adapter *padapter, u8 modulation);
 void update_sta_basic_rate(struct sta_info *psta, u8 wireless_mode);
 int rtw_ies_get_supported_rate(u8 *ies, uint ies_len, u8 *rate_set, u8 *rate_num);
+int rtw_elems_get_supported_rate(struct rtw_ieee802_11_elems *elems, u8 *rate_set, u8 *rate_num);
 
 /* for sta/adhoc mode */
 void update_sta_info(_adapter *padapter, struct sta_info *psta);
@@ -858,6 +860,7 @@ void issue_probereq(_adapter *padapter, const NDIS_802_11_SSID *pssid, const u8 
 s32 issue_probereq_ex(_adapter *padapter, const NDIS_802_11_SSID *pssid, const u8 *da, u8 ch, bool append_wps, int try_cnt, int wait_ms);
 int issue_nulldata(_adapter *padapter, unsigned char *da, unsigned int power_mode, int try_cnt, int wait_ms);
 int issue_qos_nulldata(_adapter *padapter, unsigned char *da, u16 tid, u8 ps, int try_cnt, int wait_ms);
+int issue_disasoc(_adapter *adapter, unsigned char *da, unsigned short reason);
 int issue_deauth(_adapter *padapter, unsigned char *da, unsigned short reason);
 int issue_deauth_ex(_adapter *padapter, u8 *da, unsigned short reason, int try_cnt, int wait_ms);
 void issue_addba_req(_adapter *adapter, unsigned char *ra, u8 tid);

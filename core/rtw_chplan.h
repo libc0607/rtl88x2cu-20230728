@@ -105,13 +105,14 @@ enum rtw_regd {
 extern const char *const _regd_str[];
 #define regd_str(regd) (((regd) >= RTW_REGD_NUM) ? _regd_str[RTW_REGD_NA] : _regd_str[(regd)])
 
-enum rtw_edcca_mode {
-	RTW_EDCCA_NORM	= 0, /* normal */
-	RTW_EDCCA_CS	= 1, /* carrier sense */
-	RTW_EDCCA_ADAPT	= 2, /* adaptivity */
-
+enum rtw_edcca_mode_t {
+	RTW_EDCCA_NORM		= 0, /* normal */
+	RTW_EDCCA_CS		= 1, /* carrier sense */
+	RTW_EDCCA_ADAPT		= 2, /* adaptivity */
+	RTW_EDCCA_CBP		= 3, /* contention based protocol */
 	RTW_EDCCA_MODE_NUM,
 	RTW_EDCCA_DEF		= RTW_EDCCA_MODE_NUM, /* default (ref to domain code), used at country chplan map's override field */
+	RTW_EDCCA_AUTO		= 0xFF, /* follow channel plan */
 };
 
 extern const char *const _rtw_edcca_mode_str[];
@@ -161,8 +162,13 @@ extern const REGULATION_TXPWR_LMT _txpwr_lmt_alternate[];
 
 #define TXPWR_LMT_ALTERNATE_DEFINED(txpwr_lmt) (txpwr_lmt_alternate(txpwr_lmt) != txpwr_lmt)
 
-extern const enum rtw_edcca_mode _rtw_regd_to_edcca_mode[RTW_REGD_NUM];
+extern const enum rtw_edcca_mode_t _rtw_regd_to_edcca_mode[RTW_REGD_NUM];
 #define rtw_regd_to_edcca_mode(regd) (((regd) >= RTW_REGD_NUM) ? RTW_EDCCA_NORM : _rtw_regd_to_edcca_mode[(regd)])
+
+#if CONFIG_IEEE80211_BAND_6GHZ
+extern const enum rtw_edcca_mode_t _rtw_regd_to_edcca_mode_6g[RTW_REGD_NUM];
+#define rtw_regd_to_edcca_mode_6g(regd) (((regd) >= RTW_REGD_NUM) ? RTW_EDCCA_NORM : _rtw_regd_to_edcca_mode_6g[(regd)])
+#endif
 
 extern const REGULATION_TXPWR_LMT _rtw_regd_to_txpwr_lmt[];
 #define rtw_regd_to_txpwr_lmt(regd) (((regd) >= RTW_REGD_NUM) ? TXPWR_LMT_WW : _rtw_regd_to_txpwr_lmt[(regd)])
@@ -195,12 +201,12 @@ struct country_chplan {
 #endif
 
 	/* will override edcca mode get by domain code (/6g) */
-	u8 edcca_mode_2g_override:2;
+	u8 edcca_mode_2g_override:3;
 #if CONFIG_IEEE80211_BAND_5GHZ
-	u8 edcca_mode_5g_override:2;
+	u8 edcca_mode_5g_override:3;
 #endif
 #if CONFIG_IEEE80211_BAND_6GHZ
-	u8 edcca_mode_6g_override:2;
+	u8 edcca_mode_6g_override:3;
 #endif
 
 	/* will override txpwr_lmt get by domain code (/6g) */

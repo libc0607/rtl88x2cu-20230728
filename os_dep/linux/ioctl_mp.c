@@ -157,9 +157,6 @@ int rtw_mp_read_reg(struct net_device *dev,
 	if (rtw_do_mp_iwdata_len_chk(__func__, (wrqu->length + 1)))
 		return -EFAULT;
 
-	if (wrqu->length > 128)
-		return -EFAULT;
-
 	input = (char *)rtw_zmalloc(RTW_IWD_MAX_LEN);
 	if (!input)
 		return -ENOMEM;
@@ -348,9 +345,6 @@ int rtw_mp_read_rf(struct net_device *dev,
 	char *pextra = extra;
 
 	if (rtw_do_mp_iwdata_len_chk(__func__, wrqu->length))
-		return -EFAULT;
-
-	if (wrqu->length > 128)
 		return -EFAULT;
 
 	input = (char *)rtw_zmalloc(RTW_IWD_MAX_LEN);
@@ -654,9 +648,6 @@ int rtw_mp_txpower_index(struct net_device *dev,
 	char *pextra = extra;
 
 	if (rtw_do_mp_iwdata_len_chk(__func__, (wrqu->length + 1)))
-		return -EFAULT;
-
-	if (wrqu->length > 128)
 		return -EFAULT;
 
 	_rtw_memset(input, 0, sizeof(input));
@@ -2059,7 +2050,8 @@ int rtw_mp_get_tsside(struct net_device *dev,
 	*/
 	legal_param_num = 2;
 	#endif
-	if (wrqu->length > 128)
+
+	if (rtw_do_mp_iwdata_len_chk(__func__, wrqu->length))
 		return -EFAULT;
 
 	_rtw_memset(input, 0, sizeof(input));
@@ -2907,9 +2899,10 @@ int rtw_mp_pwrlmt(struct net_device *dev,
 		pch += snprintf(pch, RTW_EXTRA_MAX_LEN, "Turn on Power Limit\n");
 
 	} else
-#endif
 		pch += sprintf(pch, "Get Power Limit Status:%s\n", (registry_par->RegEnableTxPowerLimit == 1) ? "ON" : "OFF");
-
+#else
+		pch += sprintf(pch, "Get Power Limit Status:%s\n", "OFF");
+#endif
 
 	wrqu->data.length = strlen(extra);
 	return 0;

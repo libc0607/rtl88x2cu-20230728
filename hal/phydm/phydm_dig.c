@@ -406,6 +406,12 @@ void phydm_fa_cnt_statistics_jgr3(void *dm_void)
 	fa_t->cnt_mpdu_crc32_ok = ret_value & 0xffff;
 	fa_t->cnt_mpdu_crc32_error = (ret_value & 0xffff0000) >> 16;
 
+	/* read mpdu MISS counter */
+	ret_value = odm_get_bb_reg(dm, R_0x2c2c, MASKDWORD);
+	fa_t->cnt_mpdu_miss = (ret_value & 0xff000000) >> 24;
+	ret_value = odm_get_bb_reg(dm, R_0x2c30, MASKDWORD);
+	fa_t->cnt_mpdu_miss += (((ret_value & 0xff000000) >> 24) << 8);
+
 	/* read mac counter */
 	ret_value = odm_get_mac_reg(dm, R_0x664, MASKDWORD);
 	fa_t->cnt_mac664_report = ret_value & 0xffff;
@@ -1944,6 +1950,12 @@ void phydm_fa_cnt_statistics_ac(void *dm_void)
 	ret_value = odm_get_bb_reg(dm, R_0xf54, MASKDWORD);
 	fa_t->cnt_vht2_crc32_ok = ret_value & 0xffff;
 	fa_t->cnt_vht2_crc32_error = (ret_value & 0xffff0000) >> 16;
+
+	/* read mpdu MISS counter */
+	ret_value = odm_get_bb_reg(dm, R_0xf2c, MASKDWORD);
+	fa_t->cnt_mpdu_miss = (ret_value & 0xff000000) >> 24;
+	ret_value = odm_get_bb_reg(dm, R_0xf30, MASKDWORD);
+	fa_t->cnt_mpdu_miss += (((ret_value & 0xff000000) >> 24) << 8);
 
 	#if (RTL8881A_SUPPORT)
 	if (dm->support_ic_type == ODM_RTL8881A) {

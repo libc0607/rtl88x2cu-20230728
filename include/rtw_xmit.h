@@ -100,7 +100,7 @@
 	#define MAX_CMDBUF_SZ	(512 * 18)
 #elif defined(CONFIG_RTL8723D) && defined(CONFIG_LPS_POFF)
 	#define MAX_CMDBUF_SZ	(128*70) /*(8960)*/
-#elif (defined(CONFIG_RTL8822C) || defined(CONFIG_RTL8822E)) && defined(CONFIG_WAR_OFFLOAD)
+#elif (defined(CONFIG_RTL8822C) || defined(CONFIG_RTL8822E)) && (defined(CONFIG_WAR_OFFLOAD) || defined(CONFIG_MDNS_OFFLOAD))
 	#define MAX_CMDBUF_SZ	(128*128) /*(16k) */
 #elif defined(CONFIG_RTL8723F) && defined(CONFIG_WAR_OFFLOAD)
 	#define MAX_CMDBUF_SZ	(128*64) /*(8192) */

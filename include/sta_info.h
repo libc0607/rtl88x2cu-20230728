@@ -269,6 +269,7 @@ struct sta_info {
 	_lock	lock;
 	_list	list; /* free_sta_queue */
 	_list	hash_list; /* sta_hash */
+	bool is_freeing;
 	/* _list asoc_list; */ /* 20061114 */
 	/* _list sleep_list; */ /* sleep_q */
 	/* _list wakeup_list; */ /* wakeup_q */
@@ -534,6 +535,8 @@ struct sta_info {
 	_workitem tx_q_work;
 };
 
+#define STA_MACADDR(sta) (sta)->cmn.mac_addr
+
 #ifdef CONFIG_RTW_MESH
 #define STA_SET_MESH_PLINK(sta, link) (sta)->plink = link
 #else
@@ -762,13 +765,20 @@ struct sta_info *rtw_get_stainfo_by_offset(struct sta_priv *stapriv, int offset)
 extern struct sta_info *rtw_alloc_stainfo(struct	sta_priv *pstapriv, const u8 *hwaddr);
 extern u32	rtw_free_stainfo(_adapter *padapter , struct sta_info *psta);
 extern void rtw_free_all_stainfo(_adapter *padapter);
-extern struct sta_info *rtw_get_stainfo(struct sta_priv *pstapriv, const u8 *hwaddr);
+extern struct sta_info *rtw_get_stainfo(struct sta_priv *stapriv, const u8 *hwaddr);
+struct sta_info *rtw_get_stainfo_to_free(struct sta_priv *stapriv, const u8 *hwaddr);
+void rtw_stainfo_claim_to_free_no_lock(struct sta_info *sta);
+void rtw_stainfo_claim_to_free(struct sta_info *sta);
 extern u32 rtw_init_bcmc_stainfo(_adapter *padapter);
 extern struct sta_info *rtw_get_bcmc_stainfo(_adapter *padapter);
 
 #ifdef CONFIG_AP_MODE
 u16 rtw_aid_alloc(_adapter *adapter, struct sta_info *sta);
 void dump_aid_status(void *sel, _adapter *adapter);
+void rtw_stapriv_asoc_list_lock(struct sta_priv *stapriv);
+void rtw_stapriv_asoc_list_unlock(struct sta_priv *stapriv);
+void rtw_stapriv_asoc_list_add(struct sta_priv *stapriv, struct sta_info *sta);
+void rtw_stapriv_asoc_list_del(struct sta_priv *stapriv, struct sta_info *sta);
 #endif
 
 #if CONFIG_RTW_MACADDR_ACL

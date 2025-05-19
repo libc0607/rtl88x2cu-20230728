@@ -20,6 +20,7 @@
 /* #define   MAX_JOIN_TIMEOUT	2000 */
 /* #define   MAX_JOIN_TIMEOUT	2500 */
 #define   MAX_JOIN_TIMEOUT	6500
+#define   PS_ANNC_DRV_RETRY_INT_MS	30
 
 /*	Commented by Albert 20101105
  *	Increase the scanning timeout because of increasing the SURVEY_TO value. */
@@ -59,7 +60,7 @@
 /*#define WIFI_UNDEFINED_STATE			0x04000000*/
 /*#define WIFI_UNDEFINED_STATE			0x08000000*/
 /*#define WIFI_UNDEFINED_STATE			0x10000000*/
-/*#define WIFI_UNDEFINED_STATE			0x20000000*/
+#define WIFI_CSA_SKIP_CHECK_BEACON		0x20000000
 #define WIFI_CSA_UPDATE_BEACON			0x40000000
 #define WIFI_MONITOR_STATE			0x80000000
 
@@ -680,9 +681,9 @@ struct mlme_priv {
 
 
 	int num_FortyMHzIntolerant;
+	u8 sw_to_20mhz; /*switch to 20Mhz BW*/
 
 	struct ht_priv	htpriv;
-
 #endif
 
 #ifdef CONFIG_80211AC_VHT
@@ -748,7 +749,6 @@ struct mlme_priv {
 	int ht_20mhz_width_req;
 	int ht_intolerant_ch_reported;
 	u16 ht_op_mode;
-	u8 sw_to_20mhz; /*switch to 20Mhz BW*/
 #endif /* CONFIG_80211N_HT */
 
 #endif /* CONFIG_AP_MODE and CONFIG_NATIVEAP_MLME */

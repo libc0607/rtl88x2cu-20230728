@@ -3182,7 +3182,7 @@ void rtw_dm_ra_mask_hdl(_adapter *padapter, struct sta_info *psta)
 		set_sta_rate(padapter, psta);
 }
 
-u8 rtw_dm_ra_mask_wk_cmd(_adapter *padapter, u8 *psta)
+u8 rtw_dm_ra_mask_wk_cmd(_adapter *padapter, struct sta_info *psta)
 {
 	struct cmd_obj	*ph2c;
 	struct drvextra_cmd_parm	*pdrvextra_cmd_parm;
@@ -3206,7 +3206,7 @@ u8 rtw_dm_ra_mask_wk_cmd(_adapter *padapter, u8 *psta)
 	pdrvextra_cmd_parm->ec_id = DM_RA_MSK_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = 0;
-	pdrvextra_cmd_parm->pbuf = psta;
+	pdrvextra_cmd_parm->pbuf = (void *)psta;
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, CMD_SET_DRV_EXTRA);
 
@@ -3515,8 +3515,10 @@ void rtw_dfs_ch_switch_hdl(struct dvobj_priv *dvobj)
 	u8 ifbmp_s = rtw_mi_get_ld_sta_ifbmp(pri_adapter);
 	enum band_type req_band;
 	s16 req_ch;
-	u8 req_bw = CHANNEL_WIDTH_20, req_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE, csa_timer = _FALSE;
+	u8 req_bw = CHANNEL_WIDTH_20, req_offset = HAL_PRIME_CHNL_OFFSET_DONT_CARE;
+	u8 csa_ch_valid = _FALSE;
 	u8 need_discon = _FALSE;
+	u32 csa_wait_bcn_ms;
 
 	rtw_hal_macid_sleep_all_used(pri_adapter);
 
@@ -3526,7 +3528,7 @@ void rtw_dfs_ch_switch_hdl(struct dvobj_priv *dvobj)
 		/* CSA channel available and valid */
 		req_ch = rfctl->csa_ch;
 		RTW_INFO("%s valid CSA ch%u\n", __func__, rfctl->csa_ch);
-		csa_timer = _TRUE;
+		csa_ch_valid = _TRUE;
 	} else if (ifbmp_m) {
 		/* no available or valid CSA channel, having AP/MESH ifaces */
 		req_ch = REQ_CH_NONE;
@@ -3602,10 +3604,13 @@ void rtw_dfs_ch_switch_hdl(struct dvobj_priv *dvobj)
 		}
 	}
 
-	if (csa_timer) {
-		RTW_INFO("pmlmeext->csa_timer 70 seconds\n");
-		/* wait 70 seconds for receiving beacons */
-		_set_timer(&pmlmeext->csa_timer, CAC_TIME_MS + 10000);
+	if (csa_ch_valid) {
+		if (rtw_chset_is_dfs_chbw(chset, req_ch, req_bw, req_offset))
+			csa_wait_bcn_ms = CAC_TIME_MS + 10000;
+		else
+			csa_wait_bcn_ms = 10000;
+		RTW_INFO("CSA : set csa_wait_bcn_timer to %u ms\n", csa_wait_bcn_ms);
+		_set_timer(&pmlmeext->csa_timer, csa_wait_bcn_ms);
 	}
 
 #ifdef CONFIG_AP_MODE

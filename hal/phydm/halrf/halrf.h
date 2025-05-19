@@ -127,7 +127,7 @@
 #define IQK_VER_8723F "0x00"
 #define IQK_VER_8814C "0x00"
 #define IQK_VER_8735B "0x03"
-#define IQK_VER_8822E "0x11"
+#define IQK_VER_8822E "0x14"
 
 /*LCK version*/
 #define LCK_VER_8188E "0x02"
@@ -196,7 +196,7 @@
 #define DPK_VER_8197G "0x0b"
 #define DPK_VER_8814C "0x01"
 #define DPK_VER_8735B "0x0b"
-#define DPK_VER_8822E "0x0c"
+#define DPK_VER_8822E "0x0e"
 
 /*RFK_INIT version*/
 #define RFK_INIT_VER_8822B "0x8"
@@ -219,7 +219,7 @@
 /*TXGAPK version*/
 #define TXGAPK_VER_8814B "0x1"
 #define TXGAPK_VER_8195B "0x2"
-#define TXGAPK_VER_8822E "0x5"
+#define TXGAPK_VER_8822E "0x6"
 
 /*RXDCK version*/
 #define RXDCK_VER_8735B "0x6"

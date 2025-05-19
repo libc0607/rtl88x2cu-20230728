@@ -657,7 +657,7 @@ u8 rtw_rpt_timer_cfg_cmd(_adapter *padapter, u16 minRptTime);
 extern  u8 rtw_antenna_select_cmd(_adapter *padapter, u8 antenna, u8 enqueue);
 #endif
 
-u8 rtw_dm_ra_mask_wk_cmd(_adapter *padapter, u8 *psta);
+u8 rtw_dm_ra_mask_wk_cmd(_adapter *padapter, struct sta_info *psta);
 
 u8 rtw_ips_ctrl_wk_cmd(_adapter *padapter, u8 ips_ctrl_type, u8 ips_mode, u8 flags);
 

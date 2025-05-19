@@ -362,6 +362,7 @@ struct odm_phy_dbg_info {
 #endif
 	u32			condi_num; /*@condition number U(18,4)*/
 	u8			condi_num_cdf[CN_CNT_MAX];
+	u8			band_idx;
 	u8			num_qry_beacon_pkt;
 	u8			beacon_cnt_in_period; /*@beacon cnt within watchdog period*/
 	u8			beacon_phy_rate;
@@ -442,6 +443,8 @@ enum odm_cmninfo {
 	ODM_CMNINFO_HP_HWID,
 	ODM_CMNINFO_HUAWEI_HWID,
 	ODM_CMNINFO_ATHEROS_HWID,
+	ODM_CMNINFO_BROADCOM_HWID,
+	ODM_CMNINFO_RALINK_HWID,
 	ODM_CMNINFO_TSSI_ENABLE, /*also for cmn_info_update*/
 	ODM_CMNINFO_DIS_DPD,
 	ODM_CMNINFO_POWER_VOLTAGE,
@@ -806,6 +809,8 @@ struct dm_struct {
 	u32			rx_pwdb_ave;
 	boolean		is_init_hw_info_by_rfe;
 	boolean         is_R2R_CCA_MASKT_TIME_SHORT;
+	boolean		is_fixed_chsm_winsize_bc;
+	boolean		is_fixed_chsm_winsize_mtk;
 #if (DM_ODM_SUPPORT_TYPE & ODM_WIN)
 	u32			rts_drop_cnt;
 	u32			low_rate_tx_fail_cnt;
@@ -909,6 +914,10 @@ struct dm_struct {
 	#endif
 	#if (RTL8822E_SUPPORT)
 	boolean			bt_is_linked;
+	boolean			btc_rssi_processing;
+	boolean			btc_mcs_rssi_en;
+	u8			bt_iso_tbl_idx;
+	u8			bt_cck_rssi_th;
 	#endif
 	boolean			is_nbi_csi;
 	char			dbg_buf[PHYDM_SNPRINT_SIZE];

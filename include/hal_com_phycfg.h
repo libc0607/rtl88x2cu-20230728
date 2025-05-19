@@ -138,12 +138,6 @@ PHY_TxPowerByRateConfiguration(
 
 bool phy_chk_ch_setting_consistency(_adapter *adapter, u8 ch);
 
-#ifdef CONFIG_TXPWR_PG_WITH_PWR_IDX
-u8 phy_get_pg_txpwr_idx(_adapter *pAdapter
-	, enum rf_path RFPath, RATE_SECTION rs, u8 ntx_idx
-	, enum channel_width BandWidth, u8 band, u8 Channel);
-#endif
-
 #if CONFIG_TXPWR_LIMIT
 s8 phy_get_txpwr_lmt(_adapter *adapter
 	, const char *lmt_name

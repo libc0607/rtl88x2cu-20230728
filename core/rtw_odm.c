@@ -64,67 +64,9 @@ void rtw_odm_init_ic_type(_adapter *adapter)
 	odm_cmn_info_init(odm, ODM_CMNINFO_IC_TYPE, ic_type);
 }
 
-void rtw_odm_adaptivity_ver_msg(void *sel, _adapter *adapter)
+static bool rtw_edcca_hal_mode_supported(struct dvobj_priv* dvobj, enum rtw_edcca_mode_t mode)
 {
-	RTW_PRINT_SEL(sel, "ADAPTIVITY_VERSION "ADAPTIVITY_VERSION"\n");
-}
-
-#define RTW_ADAPTIVITY_EN_DISABLE 0
-#define RTW_ADAPTIVITY_EN_ENABLE 1
-#define RTW_ADAPTIVITY_EN_AUTO 2
-
-void rtw_odm_adaptivity_en_msg(void *sel, _adapter *adapter)
-{
-	struct registry_priv *regsty = &adapter->registrypriv;
-
-	RTW_PRINT_SEL(sel, "RTW_ADAPTIVITY_EN_");
-
-	if (regsty->adaptivity_en == RTW_ADAPTIVITY_EN_DISABLE)
-		_RTW_PRINT_SEL(sel, "DISABLE\n");
-	else if (regsty->adaptivity_en == RTW_ADAPTIVITY_EN_ENABLE)
-		_RTW_PRINT_SEL(sel, "ENABLE\n");
-	else if (regsty->adaptivity_en == RTW_ADAPTIVITY_EN_AUTO)
-		_RTW_PRINT_SEL(sel, "AUTO\n");
-	else
-		_RTW_PRINT_SEL(sel, "INVALID\n");
-}
-
-#define RTW_ADAPTIVITY_MODE_NORMAL 0
-#define RTW_ADAPTIVITY_MODE_CARRIER_SENSE 1
-
-void rtw_odm_adaptivity_mode_msg(void *sel, _adapter *adapter)
-{
-	struct registry_priv *regsty = &adapter->registrypriv;
-
-	if (regsty->adaptivity_en != RTW_ADAPTIVITY_EN_ENABLE)
-		return;
-
-	RTW_PRINT_SEL(sel, "RTW_ADAPTIVITY_MODE_");
-
-	if (regsty->adaptivity_mode == RTW_ADAPTIVITY_MODE_NORMAL)
-		_RTW_PRINT_SEL(sel, "NORMAL\n");
-	else if (regsty->adaptivity_mode == RTW_ADAPTIVITY_MODE_CARRIER_SENSE)
-		_RTW_PRINT_SEL(sel, "CARRIER_SENSE\n");
-	else
-		_RTW_PRINT_SEL(sel, "INVALID\n");
-}
-
-void rtw_odm_adaptivity_config_msg(void *sel, _adapter *adapter)
-{
-	rtw_odm_adaptivity_ver_msg(sel, adapter);
-	rtw_odm_adaptivity_en_msg(sel, adapter);
-	rtw_odm_adaptivity_mode_msg(sel, adapter);
-}
-
-bool rtw_odm_adaptivity_needed(_adapter *adapter)
-{
-	struct registry_priv *regsty = &adapter->registrypriv;
-	bool ret = _FALSE;
-
-	if (regsty->adaptivity_en)
-		ret = _TRUE;
-
-	return ret;
+	return mode <= RTW_EDCCA_ADAPT;
 }
 
 void rtw_edcca_hal_update(struct dvobj_priv *dvobj)
@@ -132,7 +74,7 @@ void rtw_edcca_hal_update(struct dvobj_priv *dvobj)
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(dvobj_get_primary_adapter(dvobj));
 	struct rf_ctl_t *rfctl = dvobj_to_rfctl(dvobj);
 	struct dm_struct *odm = dvobj_to_phydm(dvobj);
-	u8 edcca_mode;
+	u8 mode;
 	BAND_TYPE band;
 	u8 uch;
 
@@ -146,17 +88,36 @@ void rtw_edcca_hal_update(struct dvobj_priv *dvobj)
 #endif
 		band = hal_data->current_band_type;
 
-	edcca_mode = rtw_get_edcca_mode(dvobj, band);
+	mode = rtw_get_edcca_mode(dvobj, band);
+	/*
+	* may get band not existing in current channel plan
+	* then edcca mode RTW_EDCCA_MODE_NUM is got
+	* this is not a real problem because this band is not used for TX
+	* change to RTW_EDCCA_NORM to avoid warning calltrace below
+	*/
+	if (mode == RTW_EDCCA_MODE_NUM)
+		mode = RTW_EDCCA_NORM;
 
-	rfctl->adaptivity_en = (edcca_mode == RTW_EDCCA_NORM || edcca_mode == RTW_EDCCA_MODE_NUM) ? 0 : 1;
-	phydm_adaptivity_info_init(odm, PHYDM_ADAPINFO_CARRIER_SENSE_ENABLE, edcca_mode == RTW_EDCCA_CS ? TRUE : FALSE);
+	if (!rtw_edcca_hal_mode_supported(dvobj, mode)) {
+		RTW_WARN("%s %s edcca mode %s is not supported by HAL, set to %s\n", __func__
+			, band_str(band), rtw_edcca_mode_str(mode), rtw_edcca_mode_str(RTW_EDCCA_NORM));
+		mode = RTW_EDCCA_NORM;
+	}
+
+	rfctl->adaptivity_en = mode == RTW_EDCCA_NORM ? false : true;
+	phydm_adaptivity_info_init(odm, PHYDM_ADAPINFO_CARRIER_SENSE_ENABLE, mode == RTW_EDCCA_CS ? true : false);
+}
+
+void rtw_odm_adaptivity_ver_msg(void *sel, _adapter *adapter)
+{
+	RTW_PRINT_SEL(sel, "ADAPTIVITY_VERSION "ADAPTIVITY_VERSION"\n");
 }
 
 void rtw_odm_adaptivity_parm_msg(void *sel, _adapter *adapter)
 {
 	struct dm_struct *odm = adapter_to_phydm(adapter);
 
-	rtw_odm_adaptivity_config_msg(sel, adapter);
+	rtw_cfg_adaptivity_config_msg(sel, adapter);
 
 	RTW_PRINT_SEL(sel, "%10s %16s\n"
 		, "th_l2h_ini", "th_edcca_hl_diff");

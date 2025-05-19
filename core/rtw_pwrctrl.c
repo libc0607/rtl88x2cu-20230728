@@ -2343,6 +2343,7 @@ void rtw_init_pwrctrl_priv(PADAPTER padapter)
 #endif
 #ifdef CONFIG_GPIO_WAKEUP
 	PHAL_DATA_TYPE pHalData = GET_HAL_DATA(padapter);
+	u8 val8 = 0;
 #endif
 
 #if defined(CONFIG_CONCURRENT_MODE)
@@ -2474,12 +2475,11 @@ void rtw_init_pwrctrl_priv(PADAPTER padapter)
 		rtw_hal_set_output_gpio(padapter, pwrctrlpriv->wowlan_gpio_index,
 			GPIO_OUTPUT_LOW);
 	#else
-	rtw_hal_set_output_gpio(padapter, pwrctrlpriv->wowlan_gpio_index
-		, pwrctrlpriv->wowlan_gpio_output_state);
 	rtw_hal_switch_gpio_wl_ctrl(padapter, pwrctrlpriv->wowlan_gpio_index, _TRUE);
+	val8 = (pwrctrlpriv->is_high_active == 0) ? 1 : 0;
+	rtw_hal_set_output_gpio(padapter, pwrctrlpriv->wowlan_gpio_index, val8);
 	RTW_INFO("%s: set GPIO_%d to OUTPUT %s state in initial and %s_ACTIVE.\n",
-		 __func__, pwrctrlpriv->wowlan_gpio_index, 
-		 pwrctrlpriv->wowlan_gpio_output_state ? "HIGH" : "LOW",
+		 __func__, pwrctrlpriv->wowlan_gpio_index, val8 ? "HIGH" : "LOW",
 		 pwrctrlpriv->is_high_active ? "HIGI" : "LOW");
 	#endif /*CONFIG_WAKEUP_GPIO_INPUT_MODE*/
 #endif /* CONFIG_RTW_ONE_PIN_GPIO */
@@ -2534,6 +2534,11 @@ void rtw_init_pwrctrl_priv(PADAPTER padapter)
 	rtw_wow_war_mdns_parms_reset(padapter, _TRUE);
 #endif /* defined(CONFIG_OFFLOAD_MDNS_V4) || defined(CONFIG_OFFLOAD_MDNS_V6) */
 #endif /* CONFIG_WAR_OFFLOAD */
+
+#ifdef CONFIG_MDNS_OFFLOAD
+	_rtw_memset(&pwrctrlpriv->mdns_ofld_info, 0,
+		    sizeof(struct rtw_mdns_ofld_info));
+#endif
 #endif /* CONFIG_WOWLAN */
 
 #ifdef CONFIG_LPS_POFF

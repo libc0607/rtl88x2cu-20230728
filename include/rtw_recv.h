@@ -540,6 +540,8 @@ struct recv_priv {
 	struct smooth_rssi_data signal_strength_data;
 #endif /* CONFIG_NEW_SIGNAL_STAT_PROCESS */
 	u16 sink_udpport, pre_rtp_rxseq, cur_rtp_rxseq;
+	u16 pre_wifi_seq, cur_wifi_seq;
+	u64 rtp_drop_count;
 
 	BOOLEAN store_law_data_flag;
 };

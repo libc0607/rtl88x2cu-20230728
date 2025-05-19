@@ -402,82 +402,6 @@ module_param(rtw_active_tpc_report, int, 0644);
 MODULE_PARM_DESC(rtw_active_tpc_report, "Active TPC report, 0:incapable, 1:capable, 2:auto enable");
 #endif
 
-#ifdef CONFIG_REGD_SRC_FROM_OS
-static uint rtw_regd_src = CONFIG_RTW_REGD_SRC;
-module_param(rtw_regd_src, uint, 0644);
-MODULE_PARM_DESC(rtw_regd_src, "The default regd source selection, 0:RTK_PRIV, 1:OS");
-#endif
-
-uint rtw_init_regd_always_apply = CONFIG_RTW_INIT_REGD_ALWAYS_APPLY;
-module_param(rtw_init_regd_always_apply, uint, 0644);
-MODULE_PARM_DESC(rtw_init_regd_always_apply, "Whether INIT regd request is always applied"
-	" (being included when taking intersection together with higher priority requests)"
-	" when regd source is RTK_PRIV");
-
-uint rtw_user_regd_always_apply = CONFIG_RTW_USER_REGD_ALWAYS_APPLY;
-module_param(rtw_user_regd_always_apply, uint, 0644);
-MODULE_PARM_DESC(rtw_user_regd_always_apply, "Whether USER regd request is always applied"
-	" (being included when taking intersection together with higher priority requests)"
-	" when regd source is RTK_PRIV");
-
-char *rtw_country_code = CONFIG_RTW_COUNTRY_CODE;
-module_param(rtw_country_code, charp, 0644);
-MODULE_PARM_DESC(rtw_country_code, "The default country code (in alpha2)");
-
-uint rtw_channel_plan = CONFIG_RTW_CHPLAN;
-module_param(rtw_channel_plan, uint, 0644);
-MODULE_PARM_DESC(rtw_channel_plan, "The default chplan ID when rtw_alpha2 is not specified or valid");
-
-static uint rtw_excl_chs[MAX_CHANNEL_NUM_2G_5G] = CONFIG_RTW_EXCL_CHS;
-static int rtw_excl_chs_num = 0;
-module_param_array(rtw_excl_chs, uint, &rtw_excl_chs_num, 0644);
-MODULE_PARM_DESC(rtw_excl_chs, "Exclusive channel list of 2G and 5G band");
-
-#if CONFIG_IEEE80211_BAND_6GHZ
-uint rtw_channel_plan_6g = CONFIG_RTW_CHPLAN_6G;
-module_param(rtw_channel_plan_6g, uint, 0644);
-MODULE_PARM_DESC(rtw_channel_plan_6g, "The default chplan_6g ID when rtw_alpha2 is not specified or valid");
-
-static uint rtw_excl_chs_6g[MAX_CHANNEL_NUM_6G] = CONFIG_RTW_EXCL_CHS_6G;
-static int rtw_excl_chs_6g_num = 0;
-module_param_array(rtw_excl_chs_6g, uint, &rtw_excl_chs_6g_num, 0644);
-MODULE_PARM_DESC(rtw_excl_chs_6g, "Exclusive channel list of 6G band");
-#endif /* CONFIG_IEEE80211_BAND_6GHZ */
-
-char *rtw_dis_ch_flags = CONFIG_RTW_DIS_CH_FLAGS;
-module_param(rtw_dis_ch_flags, charp, 0644);
-MODULE_PARM_DESC(rtw_dis_ch_flags, "The flags with which channel is to be disabled");
-
-static uint rtw_bcn_hint_valid_ms = CONFIG_RTW_BCN_HINT_VALID_MS;
-module_param(rtw_bcn_hint_valid_ms, uint, 0644);
-MODULE_PARM_DESC(rtw_bcn_hint_valid_ms, "The length of time beacon hint continue");
-
-#ifdef CONFIG_80211D
-static uint rtw_country_ie_slave_en_mode = CONFIG_RTW_COUNTRY_IE_SLAVE_EN_MODE;
-module_param(rtw_country_ie_slave_en_mode, uint, 0644);
-MODULE_PARM_DESC(rtw_country_ie_slave_en_mode, "802.11d country IE slave enable mode:"
-	" 0: disable, 1: enable, 2: enable when INIT/USER set world wide mode");
-
-static uint rtw_country_ie_slave_flags = CONFIG_RTW_COUNTRY_IE_SLAVE_FLAGS;
-module_param(rtw_country_ie_slave_flags, uint, 0644);
-MODULE_PARM_DESC(rtw_country_ie_slave_flags, "802.11d country IE slave flags:"
-	" BIT0: take intersection when having multiple received IEs, otherwise choose effected one from received IEs"
-	", BIT1: consider all environment BSSs, otherwise associated BSSs only");
-
-static uint rtw_country_ie_slave_en_role = CONFIG_RTW_COUNTRY_IE_SLAVE_EN_ROLE;
-module_param(rtw_country_ie_slave_en_role, uint, 0644);
-MODULE_PARM_DESC(rtw_country_ie_slave_en_role, "802.11d country IE slave enable role: BIT0:pure STA mode, BIT1:P2P group client");
-
-static uint rtw_country_ie_slave_en_ifbmp = CONFIG_RTW_COUNTRY_IE_SLAVE_EN_IFBMP;
-module_param(rtw_country_ie_slave_en_ifbmp, uint, 0644);
-MODULE_PARM_DESC(rtw_country_ie_slave_en_ifbmp, "802.11d country IE slave enable iface bitmap");
-
-static uint rtw_country_ie_slave_scan_int_ms = CONFIG_RTW_COUNTRY_IE_SLAVE_SCAN_INT_MS;
-module_param(rtw_country_ie_slave_scan_int_ms, uint, 0644);
-MODULE_PARM_DESC(rtw_country_ie_slave_scan_int_ms, "802.11d country IE slave auto scan interval in ms to find environment BSSs."
-	" 0: no environment BSS auto scan triggered by driver self");
-#endif
-
 /*if concurrent softap + p2p(GO) is needed, this param lets p2p response full channel list.
 But Softap must be SHUT DOWN once P2P decide to set up connection and become a GO.*/
 #ifdef CONFIG_FULL_CH_IN_P2P_HANDSHAKE
@@ -763,28 +687,6 @@ MODULE_PARM_DESC(rtw_notch_filter, "0:Disable, 1:Enable, 2:Enable only for P2P")
 uint rtw_hiq_filter = CONFIG_RTW_HIQ_FILTER;
 module_param(rtw_hiq_filter, uint, 0644);
 MODULE_PARM_DESC(rtw_hiq_filter, "0:allow all, 1:allow special, 2:deny all");
-
-uint rtw_adaptivity_en = CONFIG_RTW_ADAPTIVITY_EN;
-module_param(rtw_adaptivity_en, uint, 0644);
-MODULE_PARM_DESC(rtw_adaptivity_en, "0:disable, 1:enable, 2:auto");
-
-uint rtw_adaptivity_mode = CONFIG_RTW_ADAPTIVITY_MODE;
-module_param(rtw_adaptivity_mode, uint, 0644);
-MODULE_PARM_DESC(rtw_adaptivity_mode, "0:normal, 1:carrier sense");
-
-int rtw_adaptivity_th_l2h_ini = CONFIG_RTW_ADAPTIVITY_TH_L2H_INI;
-module_param(rtw_adaptivity_th_l2h_ini, int, 0644);
-MODULE_PARM_DESC(rtw_adaptivity_th_l2h_ini, "th_l2h_ini for Adaptivity");
-
-int rtw_adaptivity_th_edcca_hl_diff = CONFIG_RTW_ADAPTIVITY_TH_EDCCA_HL_DIFF;
-module_param(rtw_adaptivity_th_edcca_hl_diff, int, 0644);
-MODULE_PARM_DESC(rtw_adaptivity_th_edcca_hl_diff, "th_edcca_hl_diff for Adaptivity");
-
-#ifdef CONFIG_DFS_MASTER
-uint rtw_dfs_region_domain = CONFIG_RTW_DFS_REGION_DOMAIN;
-module_param(rtw_dfs_region_domain, uint, 0644);
-MODULE_PARM_DESC(rtw_dfs_region_domain, "0:NONE, 1:FCC, 2:MKK, 3:ETSI, 4:KCC");
-#endif
 
 uint rtw_amsdu_mode = RTW_AMSDU_MODE_NON_SPP;
 module_param(rtw_amsdu_mode, uint, 0644);
@@ -1211,110 +1113,6 @@ void rtw_regsty_load_target_tx_power(struct registry_priv *regsty)
 #endif /* CONFIG_IEEE80211_BAND_5GHZ */
 }
 
-inline void rtw_regsty_load_chplan(struct registry_priv *regsty)
-{
-	u16 chplan = RTW_CHPLAN_UNSPECIFIED;
-	u16 chplan_6g = RTW_CHPLAN_6G_UNSPECIFIED;
-
-	chplan = rtw_channel_plan;
-#if CONFIG_IEEE80211_BAND_6GHZ
-	chplan_6g = rtw_channel_plan_6g;
-#endif
-
-	rtw_chplan_ioctl_input_mapping(&chplan, &chplan_6g);
-
-	regsty->channel_plan = chplan;
-#if CONFIG_IEEE80211_BAND_6GHZ
-	regsty->channel_plan_6g = chplan_6g;
-#endif
-}
-
-inline void rtw_regsty_load_alpha2(struct registry_priv *regsty)
-{
-	if (!rtw_country_code || strlen(rtw_country_code) != 2
-		|| (!IS_ALPHA2_WORLDWIDE(rtw_country_code)
-			&& (is_alpha(rtw_country_code[0]) == _FALSE
-				|| is_alpha(rtw_country_code[1]) == _FALSE)
-			)
-	) {
-		if (rtw_country_code && rtw_country_code[0] != '\0')
-			RTW_ERR("%s discard rtw_country_code not in alpha2 or \"%s\"\n", __func__, WORLDWIDE_ALPHA2);
-		SET_UNSPEC_ALPHA2(regsty->alpha2);
-	} else
-		_rtw_memcpy(regsty->alpha2, rtw_country_code, 2);
-}
-
-static void rtw_regsty_load_addl_ch_disable_conf(struct registry_priv *regsty)
-{
-	int i;
-	int ch_num = 0;
-
-	if (rtw_dis_ch_flags && strlen(rtw_dis_ch_flags)) {
-		char *buf = rtw_malloc(strlen(rtw_dis_ch_flags) + 1);
-
-		if (buf) {
-			char *c;
-			enum rtw_ch_type ch_type;
-
-			_rtw_memcpy(buf, rtw_dis_ch_flags, strlen(rtw_dis_ch_flags) + 1);
-			for (c = strsep(&buf, ","); c; c = strsep(&buf, ",")) {
-				ch_type = get_ch_type_from_str(c, strlen(c));
-				if (ch_type != RTW_CHT_NUM)
-					regsty->dis_ch_flags |= BIT(ch_type);
-			}
-			rtw_mfree(buf, strlen(rtw_dis_ch_flags) + 1);
-		} else
-			RTW_WARN("%s rtw_malloc(strlen(rtw_dis_ch_flags) fail\n", __func__);
-	}
-
-	for (i = 0; i < MAX_CHANNEL_NUM_2G_5G; i++)
-		if (((u8)rtw_excl_chs[i]) != 0)
-			regsty->excl_chs[ch_num++] = (u8)rtw_excl_chs[i];
-
-	if (ch_num < MAX_CHANNEL_NUM_2G_5G)
-		regsty->excl_chs[ch_num] = 0;
-
-#if CONFIG_IEEE80211_BAND_6GHZ
-	ch_num = 0;
-	for (i = 0; i < MAX_CHANNEL_NUM_6G; i++)
-		if (((u8)rtw_excl_chs_6g[i]) != 0)
-			regsty->excl_chs_6g[ch_num++] = (u8)rtw_excl_chs_6g[i];
-
-	if (ch_num < MAX_CHANNEL_NUM_6G)
-		regsty->excl_chs_6g[ch_num] = 0;
-#endif
-}
-
-#ifdef CONFIG_80211D
-inline void rtw_regsty_load_country_ie_slave_settings(struct registry_priv *regsty)
-{
-	regsty->country_ie_slave_en_mode = rtw_country_ie_slave_en_mode;
-	regsty->country_ie_slave_flags = rtw_country_ie_slave_flags;
-	regsty->country_ie_slave_en_role = rtw_country_ie_slave_en_role;
-	regsty->country_ie_slave_en_ifbmp = rtw_country_ie_slave_en_ifbmp;
-	regsty->country_ie_slave_scan_int_ms = rtw_country_ie_slave_scan_int_ms;
-}
-#endif
-
-#ifdef CONFIG_DFS_MASTER
-static void rtw_regsty_load_dfs_region_domain_settings(struct registry_priv *regsty)
-{
-	regsty->dfs_region_domain = (u8)rtw_dfs_region_domain;
-	if (regsty->dfs_region_domain >= RTW_DFS_REGD_NUM) {
-		RTW_WARN("%s invalid DFS region domain(%u), set to %s\n", __func__
-			, regsty->dfs_region_domain, rtw_dfs_regd_str(RTW_DFS_REGD_NONE));
-		regsty->dfs_region_domain = RTW_DFS_REGD_NONE;
-		return;
-	}
-	#ifdef CONFIG_REGD_SRC_FROM_OS
-	if (rtw_regd_src == REGD_SRC_OS && regsty->dfs_region_domain != RTW_DFS_REGD_NONE) {
-		RTW_WARN("%s force disable radar detection capability when regd_src is OS\n", __func__);
-		regsty->dfs_region_domain = RTW_DFS_REGD_NONE;
-	}
-	#endif
-}
-#endif
-
 #ifdef CONFIG_80211N_HT
 inline void rtw_regsty_init_rx_ampdu_sz_limit(struct registry_priv *regsty)
 {
@@ -1348,6 +1146,8 @@ inline void rtw_regsty_init_unassoc_sta_param(struct registry_priv *regsty)
 	regsty->max_unassoc_sta_cnt = (u16) rtw_max_unassoc_sta_cnt;
 }
 #endif
+
+#include "rtw_cfg.c"
 
 uint loadparam(_adapter *padapter)
 {
@@ -1524,25 +1324,6 @@ uint loadparam(_adapter *padapter)
 	registry_par->active_tpc_report = (u8)rtw_active_tpc_report;
 #endif
 
-#ifdef CONFIG_REGD_SRC_FROM_OS
-	if (regd_src_is_valid(rtw_regd_src))
-		registry_par->regd_src = (u8)rtw_regd_src;
-	else {
-		RTW_WARN("%s invalid rtw_regd_src(%u), use REGD_SRC_RTK_PRIV instead\n", __func__, rtw_regd_src);
-		registry_par->regd_src = REGD_SRC_RTK_PRIV;
-	}
-#endif
-
-	registry_par->init_regd_always_apply = !!rtw_init_regd_always_apply;
-	registry_par->user_regd_always_apply = !!rtw_user_regd_always_apply;
-	rtw_regsty_load_alpha2(registry_par);
-	rtw_regsty_load_chplan(registry_par);
-	rtw_regsty_load_addl_ch_disable_conf(registry_par);
-	registry_par->bcn_hint_valid_ms = rtw_bcn_hint_valid_ms;
-#ifdef CONFIG_80211D
-	rtw_regsty_load_country_ie_slave_settings(registry_par);
-#endif
-
 	registry_par->full_ch_in_p2p_handshake = (u8)rtw_full_ch_in_p2p_handshake;
 #ifdef CONFIG_BT_COEXIST
 	registry_par->btcoex = (u8)rtw_btcoex_enable;
@@ -1625,11 +1406,6 @@ uint loadparam(_adapter *padapter)
 
 	registry_par->hiq_filter = (u8)rtw_hiq_filter;
 
-	registry_par->adaptivity_en = (u8)rtw_adaptivity_en;
-	registry_par->adaptivity_mode = (u8)rtw_adaptivity_mode;
-	registry_par->adaptivity_th_l2h_ini = (s8)rtw_adaptivity_th_l2h_ini;
-	registry_par->adaptivity_th_edcca_hl_diff = (s8)rtw_adaptivity_th_edcca_hl_diff;
-
 #ifdef CONFIG_DYNAMIC_SOML
 	registry_par->dyn_soml_en = (u8)rtw_dynamic_soml_en;
 	registry_par->dyn_soml_train_num = (u8)rtw_dynamic_soml_train_num;
@@ -1653,10 +1429,6 @@ uint loadparam(_adapter *padapter)
 	registry_par->reg_rxgain_offset_5gl = (u32) rtw_rxgain_offset_5gl;
 	registry_par->reg_rxgain_offset_5gm = (u32) rtw_rxgain_offset_5gm;
 	registry_par->reg_rxgain_offset_5gh = (u32) rtw_rxgain_offset_5gh;
-
-#ifdef CONFIG_DFS_MASTER
-	rtw_regsty_load_dfs_region_domain_settings(registry_par);
-#endif
 
 	registry_par->amsdu_mode = (u8)rtw_amsdu_mode;
 
@@ -1762,6 +1534,7 @@ uint loadparam(_adapter *padapter)
 #ifdef CONFIG_RTW_MULTI_AP
 	rtw_regsty_init_unassoc_sta_param(registry_par);
 #endif
+	rtw_load_registry(padapter);
 
 	return status;
 }
@@ -3004,7 +2777,8 @@ u8 rtw_reset_drv_sw(_adapter *padapter)
 	mlmeext_set_scan_state(&padapter->mlmeextpriv, SCAN_DISABLE);
 
 #ifdef CONFIG_NEW_SIGNAL_STAT_PROCESS
-	rtw_set_signal_stat_timer(&padapter->recvpriv);
+	if (padapter->netif_up == _TRUE)
+		rtw_set_signal_stat_timer(&padapter->recvpriv);
 #endif
 
 	return ret8;
@@ -3287,7 +3061,14 @@ void rtw_cancel_dynamic_chk_timer(_adapter *padapter)
 
 void rtw_cancel_all_timer(_adapter *padapter)
 {
+#ifdef CONFIG_RTW_WNM
+	_cancel_timer_ex(&padapter->mlmepriv.nb_info.roam_scan_timer);
+#endif
 
+#ifdef CONFIG_RTW_80211R
+	_cancel_timer_ex(&padapter->mlmeextpriv.ft_link_timer);
+	_cancel_timer_ex(&padapter->mlmeextpriv.ft_roam_timer);
+#endif
 	_cancel_timer_ex(&padapter->mlmepriv.assoc_timer);
 
 	_cancel_timer_ex(&padapter->mlmepriv.scan_to_timer);
@@ -3357,15 +3138,15 @@ u8 rtw_free_drv_sw(_adapter *padapter)
 		#ifdef CONFIG_CONCURRENT_MODE
 		struct roch_info *prochinfo = &padapter->rochinfo;
 		#endif
-		if (!rtw_p2p_chk_state(pwdinfo, P2P_STATE_NONE)) {
-			_cancel_timer_ex(&pwdinfo->find_phase_timer);
-			_cancel_timer_ex(&pwdinfo->restore_p2p_state_timer);
-			_cancel_timer_ex(&pwdinfo->pre_tx_scan_timer);
-			#ifdef CONFIG_CONCURRENT_MODE
-			_cancel_timer_ex(&prochinfo->ap_roch_ch_switch_timer);
-			#endif /* CONFIG_CONCURRENT_MODE */
-			rtw_p2p_set_state(pwdinfo, P2P_STATE_NONE);
-		}
+		_cancel_timer_ex(&pwdinfo->find_phase_timer);
+		_cancel_timer_ex(&pwdinfo->restore_p2p_state_timer);
+		_cancel_timer_ex(&pwdinfo->pre_tx_scan_timer);
+		_cancel_timer_ex(&pwdinfo->reset_ch_sitesurvey);
+		_cancel_timer_ex(&pwdinfo->reset_ch_sitesurvey2);
+		#ifdef CONFIG_CONCURRENT_MODE
+		_cancel_timer_ex(&prochinfo->ap_roch_ch_switch_timer);
+		#endif /* CONFIG_CONCURRENT_MODE */
+		rtw_p2p_set_state(pwdinfo, P2P_STATE_NONE);
 	}
 	#endif
 	/* add for CONFIG_IEEE80211W, none 11w also can use */
@@ -4174,7 +3955,9 @@ int _netdev_open(struct net_device *pnetdev)
 		padapter->netif_up = _TRUE;
 		pwrctrlpriv->bips_processing = _FALSE;
 	}
-
+#ifdef CONFIG_NEW_SIGNAL_STAT_PROCESS
+	rtw_set_signal_stat_timer(&padapter->recvpriv);
+#endif
 	RTW_INFO(FUNC_NDEV_FMT" Success (bup=%d)\n", FUNC_NDEV_ARG(pnetdev), padapter->bup);
 	return 0;
 
@@ -4316,6 +4099,10 @@ int _netdev_open(struct net_device *pnetdev)
 	pwrctrlpriv->tx_time = 0;
 	pwrctrlpriv->rx_time = 0;
 #endif /* CONFIG_RTW_CFGVEDNOR_LLSTATS */
+
+#ifdef CONFIG_NEW_SIGNAL_STAT_PROCESS
+	rtw_set_signal_stat_timer(&padapter->recvpriv);
+#endif
 
 	RTW_INFO("-871x_drv - drv_open, bup=%d\n", padapter->bup);
 
@@ -5083,6 +4870,10 @@ void rtw_dev_unload(PADAPTER padapter)
 
 		RTW_INFO("<== "FUNC_ADPT_FMT"\n", FUNC_ADPT_ARG(padapter));
 	} else {
+#ifdef CONFIG_HAL_PREINIT
+		if (rtw_get_hal_pre_inited(padapter) == _TRUE)
+			rtw_hal_deinit(padapter);
+#endif
 		RTW_INFO("%s: bup==_FALSE\n", __FUNCTION__);
 	}
 	rtw_cancel_all_timer(padapter);
@@ -5307,7 +5098,8 @@ int rtw_suspend_wow(_adapter *padapter)
 #ifdef CONFIG_LPS
 	else {
 		if(pwrpriv->wowlan_power_mgmt != PS_MODE_ACTIVE) {
-			rtw_set_ps_mode(padapter, pwrpriv->wowlan_power_mgmt, 0, 0, "WOWLAN");
+			RTW_INFO("%s smart_ps = %d\n", __func__, pwrpriv->smart_ps);
+			rtw_set_ps_mode(padapter, pwrpriv->wowlan_power_mgmt, pwrpriv->smart_ps, 0, "WOWLAN");
 		}
 	}
 #endif /* #ifdef CONFIG_LPS */
@@ -5626,7 +5418,9 @@ int rtw_resume_process_wow(_adapter *padapter)
 	/* Disable WOW, set H2C command */
 	poidparam.subcode = WOWLAN_DISABLE;
 	rtw_hal_set_hwreg(padapter, HW_VAR_WOWLAN, (u8 *)&poidparam);
-
+#ifdef CONFIG_NEW_SIGNAL_STAT_PROCESS
+	rtw_set_signal_stat_timer(&padapter->recvpriv);
+#endif
 #ifdef CONFIG_CONCURRENT_MODE
 	rtw_mi_buddy_reset_drv_sw(padapter);
 #endif
@@ -5645,6 +5439,19 @@ int rtw_resume_process_wow(_adapter *padapter)
 	rtw_mi_start_drv_threads(padapter);
 
 	rtw_mi_intf_start(padapter);
+	
+#if defined(CONFIG_LPS_PG) && defined(CONFIG_RTL8822C)
+	/* Restore RFK parameter */
+	{
+		u8 status;
+
+		status = halrf_config_rfk_with_header_file((&GET_HAL_DATA(padapter)->odmpriv), CONFIG_BB_RF_CAL_INIT);
+		if (HAL_STATUS_SUCCESS == status)
+			RTW_INFO("%s: restore rfk parameter success!\n", __FUNCTION__);
+		else
+			RTW_INFO("%s: restore rfk parameter fail!\n", __FUNCTION__);
+	}
+#endif
 
 	if(registry_par->suspend_type == FW_IPS_DISABLE_BBRF && !check_fwstate(pmlmepriv, WIFI_ASOC_STATE)) {
 		if (!rtw_is_surprise_removed(padapter)) {
