@@ -158,7 +158,7 @@ static void rtw_regd_schedule_dfs_chan_update(struct wiphy *wiphy)
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)) || defined(CONFIG_MLD_KERNEL_PATCH)
 	cfg80211_ch_switch_notify(wiphy_data->du_wdev->netdev, &wiphy_data->du_chdef,
 			          link_id, punct_bitmap);
-#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 2)))
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 2))
 	cfg80211_ch_switch_notify(wiphy_data->du_wdev->netdev, &wiphy_data->du_chdef, link_id);
 #else
 	cfg80211_ch_switch_notify(wiphy_data->du_wdev->netdev, &wiphy_data->du_chdef);
