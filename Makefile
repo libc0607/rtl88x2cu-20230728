@@ -2664,6 +2664,12 @@ $(MODULE_NAME)-y += $(_PLATFORM_FILES)
 
 $(MODULE_NAME)-$(CONFIG_MP_INCLUDED) += core/rtw_mp.o
 
+EXTRA_CFLAGS += -Wno-missing-prototypes -Wno-header-guard -Wno-missing-declarations
+asflags-y += $(EXTRA_AFLAGS)
+ccflags-y += $(EXTRA_CFLAGS)
+cppflags-y += $(EXTRA_CPPFLAGS)
+ldflags-y += $(EXTRA_LDFLAGS)
+
 ifeq ($(CONFIG_RTL8723B), y)
 $(MODULE_NAME)-$(CONFIG_MP_INCLUDED)+= core/rtw_bt_mp.o
 endif
