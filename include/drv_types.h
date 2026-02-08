@@ -592,6 +592,7 @@ struct registry_priv {
 #if defined(CONFIG_CONCURRENT_MODE) && defined(CONFIG_AP_MODE)
 	u8 ap_csa_cnt;
 #endif
+        int max_tx_buf_len;
 };
 
 /* For registry parameters */

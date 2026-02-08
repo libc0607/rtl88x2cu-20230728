@@ -5843,6 +5843,53 @@ static ssize_t proc_set_bf_monitor_en(struct file *file, const char __user *buff
 }
 #endif 
 
+int proc_get_tx_buf_stat(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct xmit_priv *pxmitpriv = &(padapter->xmitpriv);
+	struct registry_priv *registry_par = &padapter->registrypriv;
+
+        // See libc0607/rtl88x2eu-20230815 PR #15 and #16 for details
+        // Format: MaxTxBufLen:free_xframe_ext_cnt:free_xmit_extbuf_cnt:NR_XMIT_EXTBUFF
+        RTW_PRINT_SEL(m, "%d:%d:%d:%d\n", registry_par->max_tx_buf_len, pxmitpriv->free_xframe_ext_cnt, pxmitpriv->free_xmit_extbuf_cnt, NR_XMIT_EXTBUFF);
+
+	return 0;
+}
+
+ssize_t proc_set_tx_buf_stat(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	char tmp[16];
+	int max_tx_buf_len;
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct registry_priv *registry_par = &padapter->registrypriv;
+
+	if (count < 1) {
+		RTW_INFO("%s: argument size is less than 1\n", __FUNCTION__);
+		return -EFAULT;
+	}
+
+	if (count > sizeof(tmp)) {
+		rtw_warn_on(1);
+		return -EFAULT;
+	}
+
+	if (buffer && !copy_from_user(tmp, buffer, count)) {
+		int num = sscanf(tmp, "%d", &max_tx_buf_len);
+		if (num != 1) {
+			RTW_INFO("%s: invalid parameter\n", __FUNCTION__);
+			return count;
+		}
+		if (max_tx_buf_len < 0 || max_tx_buf_len > NR_XMIT_EXTBUFF-1) {
+			RTW_INFO("%s: parameter out of range\n", __FUNCTION__);
+			return count;
+		}
+		registry_par->max_tx_buf_len = max_tx_buf_len;
+	}
+	return count;
+}
+
 /*
 * rtw_adapter_proc:
 * init/deinit when register/unregister net_device
@@ -5852,6 +5899,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("thermal_state", proc_get_thermal_state, proc_set_thermal_state),
 	RTW_PROC_HDL_SSEQ("dis_cca", proc_get_dis_cca, proc_set_dis_cca),
 	RTW_PROC_HDL_SSEQ("single_tone", proc_get_single_tone, proc_set_single_tone),
+	RTW_PROC_HDL_SSEQ("tx_buf_stat", proc_get_tx_buf_stat, proc_set_tx_buf_stat),
 #ifdef CONFIG_BEAMFORMING_MONITOR
         RTW_PROC_HDL_SSEQ("bf_monitor_conf", proc_get_bf_monitor_conf, proc_set_bf_monitor_conf),
         RTW_PROC_HDL_SSEQ("bf_monitor_trig", proc_get_bf_monitor_trig, proc_set_bf_monitor_trig),

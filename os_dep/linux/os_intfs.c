@@ -1044,6 +1044,10 @@ uint rtw_max_unassoc_sta_cnt = 0;
 module_param(rtw_max_unassoc_sta_cnt, uint, 0644);
 #endif
 
+static int MaxTxBufLen = 0; /* default disabled */
+module_param(MaxTxBufLen, int, 0444);
+MODULE_PARM_DESC(MaxTxBufLen, "Max TX buffer size taken before returning NETDEV_TX_BUSY");
+
 #if CONFIG_TX_AC_LIFETIME
 static void rtw_regsty_load_tx_ac_lifetime(struct registry_priv *regsty)
 {
@@ -1536,6 +1540,15 @@ uint loadparam(_adapter *padapter)
 #ifdef CONFIG_RTW_MULTI_AP
 	rtw_regsty_init_unassoc_sta_param(registry_par);
 #endif
+
+	if (MaxTxBufLen > NR_XMIT_EXTBUFF-1) {
+		MaxTxBufLen = NR_XMIT_EXTBUFF-1;
+		RTW_WARN("%s: limit MaxTxBufLen to range: 0 to %d\n", __func__, NR_XMIT_EXTBUFF-1);
+	}
+	if (MaxTxBufLen>0)
+		RTW_INFO("%s: Use max %d of %d Tx buffer slots before returning NETDEV_TX_BUSY ", __func__, MaxTxBufLen, NR_XMIT_EXTBUFF);
+        registry_par->max_tx_buf_len = MaxTxBufLen;
+
 	rtw_load_registry(padapter);
 
 	return status;

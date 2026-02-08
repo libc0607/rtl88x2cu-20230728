@@ -4887,6 +4887,7 @@ s32 rtw_monitor_xmit_entry(struct sk_buff *skb, struct net_device *ndev)
 	u32 len = skb->len;
 	u8 category, action;
 	int type = -1;
+	struct registry_priv *registry_par = &padapter->registrypriv;
 
 	if (unlikely(!skb))
 		goto fail;
@@ -4903,6 +4904,11 @@ s32 rtw_monitor_xmit_entry(struct sk_buff *skb, struct net_device *ndev)
 	rtap_len = ieee80211_get_radiotap_len(skb->data);
 	if (unlikely(skb->len < rtap_len))
 		goto fail;
+
+        if (registry_par->max_tx_buf_len > 0 &&
+		 ((pxmitpriv->free_xframe_ext_cnt <= NR_XMIT_EXTBUFF - registry_par->max_tx_buf_len) ||  // check tx queue if is about to get full
+            (pxmitpriv->free_xmit_extbuf_cnt <= NR_XMIT_EXTBUFF - registry_par->max_tx_buf_len)))  // check if we can allocate more buffers before even trying to do anything
+               return NETDEV_TX_BUSY;
 
 	pmgntframe = monitor_alloc_mgtxmitframe(pxmitpriv);
 	if (unlikely(pmgntframe == NULL)) {
