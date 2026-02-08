@@ -5968,6 +5968,11 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 #endif
 
 	RTW_PROC_HDL_SSEQ("rx_signal", proc_get_rx_signal, proc_set_rx_signal),
+	RTW_PROC_HDL_SSEQ("rssi_a", proc_get_rssi_a, NULL),
+	RTW_PROC_HDL_SSEQ("rssi_b", proc_get_rssi_b, NULL),
+	RTW_PROC_HDL_SSEQ("snr_a", proc_get_snr_a, NULL),
+	RTW_PROC_HDL_SSEQ("snr_b", proc_get_snr_b, NULL),
+	RTW_PROC_HDL_SSEQ("pubq_free_page", proc_get_pubq_free_page, NULL),
 	RTW_PROC_HDL_SSEQ("rx_chk_limit", proc_get_rx_chk_limit, proc_set_rx_chk_limit),
 	RTW_PROC_HDL_SSEQ("hw_info", proc_get_hw_status, proc_set_hw_status),
 	RTW_PROC_HDL_SSEQ("mac_rptbuf", proc_get_mac_rptbuf, NULL),

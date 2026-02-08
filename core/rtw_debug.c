@@ -3593,6 +3593,56 @@ int proc_get_trx_info_debug(struct seq_file *m, void *v)
 	return 0;
 }
 
+int proc_get_rssi_a(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct dm_struct *dm = adapter_to_phydm(padapter);
+
+	RTW_PRINT_SEL(m, "%d\n", dm->rssi_a);
+	return 0;
+}
+
+int proc_get_rssi_b(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct dm_struct *dm = adapter_to_phydm(padapter);
+
+	RTW_PRINT_SEL(m, "%d\n", dm->rssi_b);
+	return 0;
+}
+
+int proc_get_snr_a(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+
+	RTW_PRINT_SEL(m, "%d\n", padapter->recvpriv.ofdm_snr_latest[RF_PATH_A]);
+	return 0;
+}
+
+int proc_get_snr_b(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+
+	RTW_PRINT_SEL(m, "%d\n", padapter->recvpriv.ofdm_snr_latest[RF_PATH_B]);
+	return 0;
+}
+
+int proc_get_pubq_free_page(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	u32 reg, pubq;
+
+	reg = rtw_read32(padapter, 0x0240);
+	pubq = (reg >> 16) & 0x0FFF;
+	RTW_PRINT_SEL(m, "%u\n", pubq);
+	return 0;
+}
+
 int proc_get_rx_signal(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;

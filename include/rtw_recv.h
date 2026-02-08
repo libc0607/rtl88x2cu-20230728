@@ -523,6 +523,7 @@ struct recv_priv {
 	u8 signal_qual;
 	s8 rssi;	/* translate_percentage_to_dbm(ptarget_wlan->network.PhyInfo.SignalStrength); */
 	struct rx_raw_rssi raw_rssi_info;
+	s8 ofdm_snr_latest[4];
 	/* s8 rxpwdb;	 */
 	/* int RxSNRdB[2]; */
 	/* s8 RxRssi[2]; */
