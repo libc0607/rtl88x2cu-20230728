@@ -30,7 +30,11 @@ Original driver from Realtek:
 Changelog (from Realtek): [ReleaseNotes.pdf](https://github.com/user-attachments/files/20281972/ReleaseNotes.pdf)  
 
 ## Open Source Hardware 
-BL-M8812CU3 datasheet: [BL-M8812CU3_datasheet_V1.0.1.1.pdf](https://github.com/user-attachments/files/20282045/BL-M8812CU3_datasheet_V1.0.1.1.pdf)  
+[BL-M8812CU3_datasheet_V1.0.1.1.pdf](https://github.com/user-attachments/files/20282045/BL-M8812CU3_datasheet_V1.0.1.1.pdf)  
+[BL-M8812CU2_Datasheet_V1.0.pdf](https://github.com/user-attachments/files/25232595/BL-M8812CU2_Datasheet_V1.0.pdf)  
+[RTL8812CU-CG_V4.3r03-20191113_.pdf](https://github.com/user-attachments/files/25232605/RTL8812CU-CG_V4.3r03-20191113_.pdf)  
+[RTL8822CU_UM822C00.pdf](https://github.com/user-attachments/files/25232608/RTL8822CU_UM822C00.pdf)  
+
 
 Schematic & PCB design (using the chip, not module):  
 [libc0607/rtl88x2cu_rfpa5542_20mm_demo_v1p0](https://oshwhub.com/libc0607/rtl88x2cu_rfpa5542_20mm_demo_v1p0)  
