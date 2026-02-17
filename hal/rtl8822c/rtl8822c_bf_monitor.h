@@ -116,6 +116,7 @@ void    bf_monitor_init(PADAPTER adapter, u8* bfer_macaddr, u8 bfer_g_id, u16 bf
 void    bf_monitor_reset(PADAPTER adapter);
 void    bf_monitor_send(PADAPTER adapter, u8* bfer_macaddr, u8* bfee_macaddr, u16 p_aid, u8 g_id, u8 seq, enum channel_width bw);
 void    bf_monitor_print_cbr(PADAPTER adapter, struct seq_file *m);
+void    bf_monitor_print_cbr_rfinfo(PADAPTER adapter, struct seq_file *m);
 void    bf_monitor_print_conf(PADAPTER adapter, struct seq_file *m);
 void    bf_monitor_enable_txbf(PADAPTER adapter, bool en);
 

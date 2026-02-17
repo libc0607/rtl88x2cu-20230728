@@ -5841,6 +5841,19 @@ static ssize_t proc_set_bf_monitor_en(struct file *file, const char __user *buff
         RTW_INFO("bf_monitor_enable, %hhu \n", en);
 	return count;
 }
+
+static int proc_get_bf_monitor_rfinfo(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+
+	if (!padapter)
+		return -EFAULT;
+
+        bf_monitor_print_cbr_rfinfo(padapter, m);
+
+	return 0;
+}
 #endif 
 
 int proc_get_tx_buf_stat(struct seq_file *m, void *v)
@@ -5904,6 +5917,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
         RTW_PROC_HDL_SSEQ("bf_monitor_conf", proc_get_bf_monitor_conf, proc_set_bf_monitor_conf),
         RTW_PROC_HDL_SSEQ("bf_monitor_trig", proc_get_bf_monitor_trig, proc_set_bf_monitor_trig),
         RTW_PROC_HDL_SSEQ("bf_monitor_en",   NULL,                     proc_set_bf_monitor_en),
+        RTW_PROC_HDL_SSEQ("bf_monitor_rfinfo", proc_get_bf_monitor_rfinfo, NULL),
 #endif
 #if RTW_SEQ_FILE_TEST
 	RTW_PROC_HDL_SEQ("seq_file_test", &seq_file_test, NULL),

@@ -546,6 +546,45 @@ void bf_monitor_print_cbr(PADAPTER adapter, struct seq_file *m)
     */
 }
 
+// A fast RF info readout API, without those verbose info above
+// To-do: the output is limited to two 2t2r NICs, so the format may need change for any 4t4r in future...
+void bf_monitor_print_cbr_rfinfo(PADAPTER adapter, struct seq_file *m)
+{
+    HAL_DATA_TYPE	*pHalData;
+    struct csi_rpt_monitor * csi;
+
+    pHalData = GET_HAL_DATA(adapter);
+    csi = &(pHalData->csi_rpt_monitor);
+
+    // In this function, localhost is ALWAYS BFer, remote is ALWAYS BFee
+    // In a full sounding process, there are 3 frames in air:
+    //   1. BFer send NDPA frame to BFee
+    //        NDPA frame contains a sounding token (set in bf_mon.sh)
+    //   2. BFer send NDP frame to BFee
+    //        BFee logged this frame's SNR => ndp_snr
+    //   3. BFee send CBR frame to BFer
+    //        CBR frame contains: a). sounding token in step 1; b). ndp_snr[nc+1]
+    //        BFer logged this frame's SNR, RSSI => cbr_snr, cbr_rssi
+    //
+    // So, the output format is described as below:
+    //   token:ndp_snr[0]:ndp_snr[1]:cbr_rssi[0]:cbr_rssi[1]:cbr_snr[0]:cbr_snr[1]
+    // e.g.
+    //   "0:30:12:-60:-58:28:29"
+    //
+    // In which:
+    //   token:[0,63], ndp_snr/cbr_snr:dB, cbr_rssi:dBm
+    //   ndp_snr: NDP frame's SNR, received by BFee in step 2
+    //   cbr_*: CBR frame's RF info, received by BFer in step 3
+
+
+    RTW_PRINT_SEL(m, "%hhu:%d:%d:%d:%d:%d:%d\n",
+    	csi->token,
+    	(s8)((csi->snr[0]/4)+22), (s8)((csi->snr[1]/4)+22),
+    	csi->rx_pwr[0], csi->rx_pwr[1],
+    	csi->rx_snr[0], csi->rx_snr[1]
+    );
+}
+
 void bf_monitor_print_conf(PADAPTER adapter, struct seq_file *m)
 {
     u32 i, txbf_ctrl, tmp6dc, addr_bfer_info, bfee_sel;
@@ -605,7 +644,6 @@ u32 bf_monitor_get_report_packet(PADAPTER adapter, union recv_frame *precv_frame
 	u8 category, action;
 	u8 *pMIMOCtrlField;
 	u8 *pCSIMatrix;
-	u8 Nc = 0, Nr = 0, CH_W = 0, Ng = 0, CodeBook = 0;
 	u16 CSIMatrixLen = 0;
 	u32 i, j;
 	struct csi_rpt_monitor * csi;
@@ -639,7 +677,7 @@ u32 bf_monitor_get_report_packet(PADAPTER adapter, union recv_frame *precv_frame
 	csi->ng = (*(pMIMOCtrlField+1)) & 0x3;
 	csi->codebook = ((*(pMIMOCtrlField+1)) & 0x4) >> 2;
         csi->token =  ((*(pMIMOCtrlField+2)) & 0xfc) >> 2;
-        for (i=0; i<Nc+1; i++) {
+        for (i=0; i<(csi->nc+1); i++) {
             csi->snr[i] = (*(pMIMOCtrlField+3+i));
             csi->rx_snr[i] = precv_frame->u.hdr.attrib.phy_info.rx_snr[i];
             csi->rx_pwr[i] = precv_frame->u.hdr.attrib.phy_info.rx_pwr[i];
@@ -649,11 +687,11 @@ u32 bf_monitor_get_report_packet(PADAPTER adapter, union recv_frame *precv_frame
 	 * 24+(1+1+3)+2
 	 * ==> MAC header+(Category+ActionCode+MIMOControlField)+SNR(Nc=2)
 	 */
-	CSIMatrixLen = frame_len - 26 - 3 - (Nc+1) - 4; // 4=crc
+	CSIMatrixLen = frame_len - 26 - 3 - (csi->nc+1) - 4; // 4=crc
 	csi->csi_matrix_len = CSIMatrixLen;
 
-	// todo: bug here, and... it's useless
-	//pCSIMatrix = pMIMOCtrlField + 3 + (Nc+1);
+	// todo: bug here, and... it's useless // Fixed, wrong Nc
+	//pCSIMatrix = pMIMOCtrlField + 3 + (csi->nc+1);
 	// _rtw_memcpy(csi->csi_matrix, pCSIMatrix, CSIMatrixLen);
 
 	RTW_INFO("BF_MONITOR %s: local is BFer (%02x:%02x:%02x:%02x:%02x:%02x), got compressed beamforming report from BFee (%02x:%02x:%02x:%02x:%02x:%02x), Nc=%d, Nr=%d, CH_W=%d, Ng=%d, CodeBook=%d\n",
