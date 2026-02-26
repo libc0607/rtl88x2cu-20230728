@@ -3525,7 +3525,7 @@ void rtl8822c_fill_txdesc_mgnt_bf(struct xmit_frame *frame, u8 *desc)
 	SET_TX_DESC_SIGNALING_TA_PKT_SC_8822C(desc,
 					rtl8822c_sc_mapping(adapter, attrib));
 	/*SET_TX_DESC_RTY_LMT_EN_8822C(ptxdesc, 1);*/
-	SET_TX_DESC_RTS_DATA_RTY_LMT_8822C(desc, 5);
+	SET_TX_DESC_RTS_DATA_RTY_LMT_8822C(desc, adapter->registrypriv.bf_ndpa_rty_cnt);
 	SET_TX_DESC_NDPA_8822C(desc, 1);
 	SET_TX_DESC_NAVUSEHDR_8822C(desc, 1);
 	/*SET_TX_DESC_QSEL_8822C(desc, QSLT_MGNT);*/

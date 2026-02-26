@@ -5854,6 +5854,52 @@ static int proc_get_bf_monitor_rfinfo(struct seq_file *m, void *v)
 
 	return 0;
 }
+
+ssize_t proc_set_bf_monitor_rty_cnt(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
+{
+	char tmp[16];
+	int rty_cnt;
+	struct net_device *dev = data;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct registry_priv *registry_par = &padapter->registrypriv;
+
+	if (count < 1) {
+		RTW_INFO("%s: argument size is less than 1\n", __FUNCTION__);
+		return -EFAULT;
+	}
+
+	if (count > sizeof(tmp)) {
+		rtw_warn_on(1);
+		return -EFAULT;
+	}
+
+	if (buffer && !copy_from_user(tmp, buffer, count)) {
+		int num = sscanf(tmp, "%d", &rty_cnt);
+		if (num != 1) {
+			RTW_INFO("%s: invalid parameter\n", __FUNCTION__);
+			return count;
+		}
+		if (rty_cnt < 0 || rty_cnt > 63) {
+		        // mask 0x3f, 0=disable, 1~62=retry n frames, 63=infinite
+			RTW_INFO("%s: parameter out of range\n", __FUNCTION__);
+			return count;
+		}
+		registry_par->bf_ndpa_rty_cnt = rty_cnt;
+	}
+	return count;
+}
+
+int proc_get_bf_monitor_rty_cnt(struct seq_file *m, void *v)
+{
+	struct net_device *dev = m->private;
+	_adapter *padapter = (_adapter *)rtw_netdev_priv(dev);
+	struct xmit_priv *pxmitpriv = &(padapter->xmitpriv);
+	struct registry_priv *registry_par = &padapter->registrypriv;
+
+        RTW_PRINT_SEL(m, "%d\n", registry_par->bf_ndpa_rty_cnt);
+
+	return 0;
+}
 #endif 
 
 int proc_get_tx_buf_stat(struct seq_file *m, void *v)
@@ -5918,6 +5964,7 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
         RTW_PROC_HDL_SSEQ("bf_monitor_trig", proc_get_bf_monitor_trig, proc_set_bf_monitor_trig),
         RTW_PROC_HDL_SSEQ("bf_monitor_en",   NULL,                     proc_set_bf_monitor_en),
         RTW_PROC_HDL_SSEQ("bf_monitor_rfinfo", proc_get_bf_monitor_rfinfo, NULL),
+        RTW_PROC_HDL_SSEQ("bf_monitor_rty_cnt", proc_get_bf_monitor_rty_cnt, proc_set_bf_monitor_rty_cnt),
 #endif
 #if RTW_SEQ_FILE_TEST
 	RTW_PROC_HDL_SEQ("seq_file_test", &seq_file_test, NULL),

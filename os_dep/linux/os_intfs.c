@@ -1549,6 +1549,10 @@ uint loadparam(_adapter *padapter)
 		RTW_INFO("%s: Use max %d of %d Tx buffer slots before returning NETDEV_TX_BUSY ", __func__, MaxTxBufLen, NR_XMIT_EXTBUFF);
         registry_par->max_tx_buf_len = MaxTxBufLen;
 
+#if defined(CONFIG_BEAMFORMING) || defined(CONFIG_BEAMFORMING_MONITOR)
+        registry_par->bf_ndpa_rty_cnt = 5; // driver default
+#endif
+
 	rtw_load_registry(padapter);
 
 	return status;
