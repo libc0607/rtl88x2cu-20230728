@@ -2413,7 +2413,8 @@ bool phy_chk_ch_setting_consistency(_adapter *adapter, u8 ch)
 			rtw_warn_on(1);
 			goto exit;
 		}
-		if (hal_data->current_channel_bw > CHANNEL_WIDTH_40) {
+		if ((hal_data->current_channel_bw > CHANNEL_WIDTH_40 && hal_data->current_channel_bw < CHANNEL_WIDTH_5)
+		 || (hal_data->current_channel_bw > CHANNEL_WIDTH_10)) {
 			rtw_warn_on(1);
 			goto exit;
 		}
@@ -2423,7 +2424,7 @@ bool phy_chk_ch_setting_consistency(_adapter *adapter, u8 ch)
 			rtw_warn_on(1);
 			goto exit;
 		}
-		if (hal_data->current_channel_bw > CHANNEL_WIDTH_160) {
+		if (hal_data->current_channel_bw == CHANNEL_WIDTH_80_80 || hal_data->current_channel_bw > CHANNEL_WIDTH_10) {
 			rtw_warn_on(1);
 			goto exit;
 		}
@@ -2496,7 +2497,7 @@ static u8 phy_get_pg_txpwr_idx(_adapter *pAdapter
 		}
 
 		/* BW20-nS */
-		if (BandWidth == CHANNEL_WIDTH_20) {
+		if (BandWidth == CHANNEL_WIDTH_5 || BandWidth == CHANNEL_WIDTH_10 || BandWidth == CHANNEL_WIDTH_20) {
 			txPower += pHalData->BW20_24G_Diff[RFPath][RF_1TX];
 			if (rate_section_to_tx_num(rs) >= RF_2TX)
 				txPower += pHalData->BW20_24G_Diff[RFPath][RF_2TX];
@@ -2544,7 +2545,7 @@ static u8 phy_get_pg_txpwr_idx(_adapter *pAdapter
 		}
 
 		/* BW20-nS */
-		if (BandWidth == CHANNEL_WIDTH_20) {
+		if (BandWidth == CHANNEL_WIDTH_5 || BandWidth == CHANNEL_WIDTH_10 || BandWidth == CHANNEL_WIDTH_20) {
 			txPower += pHalData->BW20_5G_Diff[RFPath][RF_1TX];
 			if (rate_section_to_tx_num(rs) >= RF_2TX)
 				txPower += pHalData->BW20_5G_Diff[RFPath][RF_2TX];
